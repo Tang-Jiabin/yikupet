@@ -1,0 +1,38 @@
+plugins {
+	id 'org.springframework.boot' version '2.1.4.RELEASE'
+	id 'java'
+	id 'war'
+}
+
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.ykkoo.pet'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    runtimeOnly 'mysql:mysql-connector-java'
+    compileOnly('org.projectlombok:lombok')
+	compile 'com.auth0:java-jwt:3.3.0'
+    //谷歌Gson
+	compile 'com.google.code.gson:gson:2.8.1'
+    //开发工具
+    compile 'org.springframework.boot:spring-boot-devtools'
+    //swagger文档
+    compile 'io.springfox:springfox-swagger2:2.2.2'
+    compile 'io.springfox:springfox-swagger-ui:2.2.2'
+    //邮件
+    compile group: 'javax.mail', name: 'mail', version: '1.4.7'
+    //七牛云
+    compile 'com.qiniu:qiniu-java-sdk:7.2.14'
+    // https://mvnrepository.com/artifact/com.alibaba/fastjson
+    compile group: 'com.alibaba', name: 'fastjson', version: '1.2.58'
+
+}

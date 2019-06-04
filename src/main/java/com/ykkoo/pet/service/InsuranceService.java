@@ -1,0 +1,25 @@
+package com.ykkoo.pet.service;
+
+import com.ykkoo.pet.common.http.KVResult;
+import com.ykkoo.pet.dto.InsuranceDTO;
+import com.ykkoo.pet.pojo.PetInsurance;
+import java.util.List;
+
+public abstract interface InsuranceService
+{
+  public abstract KVResult findInsuranceByType(Integer paramInteger);
+  
+  public abstract KVResult addInsurance(InsuranceDTO paramInsuranceDTO, Integer paramInteger);
+  
+  public abstract PetInsurance findByInsuranceId(Integer paramInteger);
+  
+  public abstract List<PetInsurance> findAllByInsuranceIdIn(List<Integer> paramList);
+  
+  public abstract KVResult getInsurancePage(Integer paramInteger1, Integer paramInteger2, String paramString, Integer paramInteger3, Integer paramInteger4, Integer paramInteger5);
+}
+
+
+/* Location:              /Users/edz/Desktop/pet.war!/WEB-INF/classes/com/ykkoo/pet/service/InsuranceService.class
+ * Java compiler version: 8 (52.0)
+ * JD-Core Version:       0.7.1
+ */
