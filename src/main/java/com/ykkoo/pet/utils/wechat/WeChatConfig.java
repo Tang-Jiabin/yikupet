@@ -13,17 +13,11 @@ import lombok.Data;
 @Data
 public class WeChatConfig {
 
-    /**
-     * APPID
-     */
-    public static final String APP_ID = "";
-    /**
-     * APP secret
-     */
-    public static final String APP_SECRET = "";
-
-    /**
-     * 登录凭证校验
-     */
+    public static final String APP_ID = "wx0ba8bd8b4ff6901c";
+    public static final String APP_SECRET = "9c92803f65f1bc093610be06b92dab0c";
     public static final String CODE_SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
+    public static final String MCH_ID = "1536362081";
+    public static final String API_KEY = "UDkqMRSAMz4HIws3Ll7T9PVcktX9xD0g";
+    public static final String NOTIFY_URL = "https://wechat.ykkoo.com/pet/pay/tenCallback";
+    public static final String DEFAULT_CHARSET = "UTF-8";
 }

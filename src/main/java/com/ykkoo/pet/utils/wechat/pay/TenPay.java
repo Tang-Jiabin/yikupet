@@ -1,66 +1,72 @@
 package com.ykkoo.pet.utils.wechat.pay;
 
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import com.ykkoo.pet.utils.wechat.pay.utls.WxPayDTO;
-import okhttp3.*;
-
 import java.io.IOException;
+import java.util.Map;
+import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Request.Builder;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.ykkoo.pet.utils.wechat.pay.TenPayConfig.APP_ID;
-import static com.ykkoo.pet.utils.wechat.pay.TenPayConfig.MCH_ID;
-import static com.ykkoo.pet.utils.wechat.pay.TenPayConfig.NOTIFY_URL;
+import static com.ykkoo.pet.utils.wechat.WeChatConfig.APP_ID;
+import static com.ykkoo.pet.utils.wechat.WeChatConfig.MCH_ID;
+import static com.ykkoo.pet.utils.wechat.WeChatConfig.NOTIFY_URL;
 
+public class TenPay
+{
+    private static final Logger log = LoggerFactory.getLogger(TenPay.class);
 
-/**
- * 微信WEB支付
- *
- * @author : J.Tang
- * @version : v1.0
- * @email : seven_tjb@163.com
- * @date : 2018-10-25
- **/
-
-public class TenPay {
-
-
-    /**
-     * 腾讯支付
-     *
-     * @param body             商品描述
-     * @param attach           附加数据
-     * @param out_trade_no     商户订单号
-     * @param total_fee        总金额
-     * @param spbill_create_ip 终端IP
-     * @return 支付链接
-     */
-    public static String pay(String body, String attach, String out_trade_no, Integer total_fee, String spbill_create_ip) {
-
+    public static String pay(String body, String attach, String out_trade_no, Integer total_fee, String spbill_create_ip, String opendId)
+    {
         OkHttpClient client = new OkHttpClient();
 
-        WxPayDTO wxPayDTO = new WxPayDTO(APP_ID, MCH_ID, body, attach, out_trade_no, total_fee, spbill_create_ip, NOTIFY_URL,"JSAPI");
+        WxPayDTO wxPayDTO = new WxPayDTO(APP_ID, MCH_ID, body, attach, out_trade_no, total_fee, spbill_create_ip, NOTIFY_URL, "JSAPI", opendId);
 
-        RequestBody requestBody = RequestBody.create(MediaType.parse("XML"), wxPayDTO.toXmlString());
+        String xmlString = wxPayDTO.toXmlString();
+
+        RequestBody requestBody = RequestBody.create(MediaType.parse("XML"), xmlString);
 
         Request request = new Request.Builder().url("https://api.mch.weixin.qq.com/pay/unifiedorder").post(requestBody).build();
 
         Response response = null;
-        try {
+        try
+        {
             response = client.newCall(request).execute();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
-
         String payUrl = "";
-
-        try {
+        try
+        {
             payUrl = response.body().string();
-            payUrl = payUrl.split("<mweb_url>")[1].replace("<![CDATA[", "");
-            payUrl = payUrl.replace("]]></mweb_url>\n</xml>", "");
-        } catch (IOException e) {
+            log.info(payUrl);
+
+            String nonceStr = payUrl.substring(payUrl.indexOf("<nonce_str><![CDATA[") + 20, payUrl.indexOf("]]></nonce_str>"));
+            String packageStr = payUrl.substring(payUrl.indexOf("<prepay_id><![CDATA[") + 20, payUrl.indexOf("]]></prepay_id>"));
+            String paySign = payUrl.substring(payUrl.indexOf("<sign><![CDATA[") + 15, payUrl.indexOf("]]></sign>"));
+
+            Map<String, String> map = Maps.newHashMap();
+            map.put("timeStamp", String.valueOf(System.currentTimeMillis()));
+            map.put("nonceStr", nonceStr);
+            map.put("package", packageStr);
+            map.put("signType", "MD5");
+            map.put("paySign", paySign);
+            payUrl = new Gson().toJson(map);
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
-
         return payUrl;
     }
-
-
 }

@@ -1,21 +1,19 @@
 package com.ykkoo.pet.service.impl;
 
+import com.ykkoo.pet.vo.PetAnimalVO;
+import com.ykkoo.pet.vo.InsuranceVO;
+import com.ykkoo.pet.vo.UserVO;
+
 import com.google.common.collect.Lists;
 import com.ykkoo.pet.common.http.KVResult;
 import com.ykkoo.pet.common.type.FileType;
-import com.ykkoo.pet.dto.DiagnosticDTO;
-import com.ykkoo.pet.dto.FileDTO;
-import com.ykkoo.pet.dto.FileUploadDTO;
-import com.ykkoo.pet.dto.HospitalDTO;
+import com.ykkoo.pet.dto.*;
 import com.ykkoo.pet.pojo.*;
-import com.ykkoo.pet.repository.PetHospitalInfoRepository;
-import com.ykkoo.pet.repository.PetHospitalRepository;
-import com.ykkoo.pet.repository.PetReservationInfoRepository;
+import com.ykkoo.pet.repository.*;
 import com.ykkoo.pet.service.FileService;
 import com.ykkoo.pet.service.HospitalService;
 import com.ykkoo.pet.service.InsurancePolicyService;
-import com.ykkoo.pet.vo.HospitalVO;
-import com.ykkoo.pet.vo.PageVo;
+import com.ykkoo.pet.vo.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -32,6 +30,7 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * 医院
@@ -51,6 +50,15 @@ public class HospitalServiceImpl implements HospitalService {
     private PetHospitalInfoRepository hospitalInfoRepository;
     private InsurancePolicyService insurancePolicyService;
     private PetReservationInfoRepository reservationInfoRepository;
+    private PetPromoterRepository promoterRepository;
+    private PetUserInfoRepository userInfoRepository;
+    private PetInsuranceDiseaseRepository insuranceDiseaseRepository;
+    private PetInsuranceRepository insuranceRepository;
+    private PetAnimalRepository animalRepository;
+    private PetDiseaseTypesRepository diseaseTypesRepository;
+    private PetMedicalInfoRepository medicalInfoRepository;
+    private PetHospitalAccountRepository hospitalAccountRepository;
+    private PetCompensateDetailsRepository compensateDetailsRepository;
 
     @Override
     public KVResult addHospital(HospitalDTO hospitalDTO, Integer adminId) {
@@ -72,26 +80,36 @@ public class HospitalServiceImpl implements HospitalService {
 
         //医院头像
         FileDTO headPortrait = hospitalDTO.getHospitalHeadPortrait();
-        headPortrait.setHospitalId(hospital.getHospitalId());
-        headPortrait.setFileType(FileType.HOSPITAL_HEAD_PORTRAIT);
-        PetFile upload = fileService.upload(headPortrait, adminId);
-        hospital.setHospitalHeadPortrait(upload.getFileUrl());
-        hospital = hospitalRepository.save(hospital);
+        if (headPortrait != null) {
+            headPortrait.setHospitalId(hospital.getHospitalId());
+            headPortrait.setFileType(FileType.HOSPITAL_HEAD_PORTRAIT);
+            PetFile upload = fileService.upload(headPortrait, adminId);
+            hospital.setHospitalHeadPortrait(upload.getFileUrl());
+            hospital = hospitalRepository.save(hospital);
+        }
+
 
         //医院
         FileUploadDTO businessLicense = hospitalDTO.getBusinessLicense();
-        for (FileDTO fileDTO : businessLicense.getFileDTOList()) {
-            fileDTO.setHospitalId(hospital.getHospitalId());
-            fileDTO.setFileType(FileType.HOSPITAL_BUSINESS_LICENSE);
+        if (businessLicense != null) {
+            for (FileDTO fileDTO : businessLicense.getFileDTOList()) {
+                fileDTO.setHospitalId(hospital.getHospitalId());
+                fileDTO.setFileType(FileType.HOSPITAL_BUSINESS_LICENSE);
+            }
+            fileService.upload(businessLicense, adminId);
         }
-        fileService.upload(businessLicense, adminId);
+
 
         FileUploadDTO hospitalDetailsPic = hospitalDTO.getHospitalDetailsPic();
-        for (FileDTO fileDTO : hospitalDetailsPic.getFileDTOList()) {
-            fileDTO.setHospitalId(hospital.getHospitalId());
-            fileDTO.setFileType(FileType.HOSPITAL_DETAILS_PIC);
+        if (hospitalDetailsPic != null) {
+            for (FileDTO fileDTO : hospitalDetailsPic.getFileDTOList()) {
+                fileDTO.setHospitalId(hospital.getHospitalId());
+                fileDTO.setFileType(FileType.HOSPITAL_DETAILS_PIC);
+            }
+            System.out.println(hospitalDetailsPic);
+            fileService.upload(hospitalDetailsPic, adminId);
         }
-        fileService.upload(hospitalDetailsPic, adminId);
+
 
         PetHospitalInfo hospitalInfo = hospitalInfoRepository.findByHospitalId(hospital.getHospitalId());
         if (hospitalInfo == null) {
@@ -104,13 +122,13 @@ public class HospitalServiceImpl implements HospitalService {
         return KVResult.put(HttpStatus.OK);
     }
 
-    @Override
-    public KVResult getHospitalPage(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, Integer paramInteger4, Integer paramInteger5, String paramString1, String paramString2, Integer paramInteger6) {
-        return null;
-    }
-
 //    @Override
-    public KVResult getHospitalPage(Integer page, Integer scope, Integer type,String name) {
+//    public KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer v2) {
+//        return getHospitalPage(page,scope,type,hospitalName);
+//    }
+
+    @Override
+    public KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer v2) {
 
         Pageable pageable = PageRequest.of(page, 10, Sort.Direction.DESC, "hospitalId");
         Page<PetHospital> hospitalPage = hospitalRepository.findAll((root, query, criteriaBuilder) -> {
@@ -129,9 +147,15 @@ public class HospitalServiceImpl implements HospitalService {
                 in.value(3);
                 list.add(in);
             }
-            if(!StringUtils.isEmpty(name)){
-                list.add(criteriaBuilder.like(root.get("hospitalName").as(String.class), String.format("%%%s%%", name)));
+            if (!StringUtils.isEmpty(hospitalName)) {
+                list.add(criteriaBuilder.like(root.get("hospitalName").as(String.class), String.format("%%%s%%", hospitalName)));
             }
+
+            if (cooperationState != null && cooperationState != 0) {
+                list.add(criteriaBuilder.equal(root.get("cooperationState").as(Integer.class), cooperationState));
+            }
+
+
             Predicate[] p = new Predicate[list.size()];
             return criteriaBuilder.and(list.toArray(p));
         }, pageable);
@@ -144,14 +168,21 @@ public class HospitalServiceImpl implements HospitalService {
         }
 
         List<PetFile> hospitalDetailsPicList = fileService.findAllByFileTypeAndStateAndHospitalIdIn(FileType.HOSPITAL_DETAILS_PIC, 1, hospitalIdList);
+        List<PetFile> hospitalHeadPicList = fileService.findAllByFileTypeAndStateAndHospitalIdIn(FileType.HOSPITAL_HEAD_PORTRAIT, 1, hospitalIdList);
+        List<PetFile> hospitalBusinessPicList = fileService.findAllByFileTypeAndStateAndHospitalIdIn(FileType.HOSPITAL_BUSINESS_LICENSE, 1, hospitalIdList);
 
         HospitalVO hospitalVO;
         List<HospitalVO> hospitalVOList = Lists.newArrayList();
         List<PetFile> petFileList;
 
+
+        List<PetHospitalInfo> hospitalInfoList = hospitalInfoRepository.findAllByHospitalIdIn(hospitalIdList);
+
         for (PetHospital petHospital : hospitalList) {
             hospitalVO = new HospitalVO();
             BeanUtils.copyProperties(petHospital, hospitalVO);
+
+
             petFileList = Lists.newArrayList();
             for (PetFile petFile : hospitalDetailsPicList) {
                 if (petHospital.getHospitalId().equals(petFile.getHospitalId())) {
@@ -159,6 +190,35 @@ public class HospitalServiceImpl implements HospitalService {
                 }
             }
             hospitalVO.setHospitalDetailsPic(petFileList);
+
+
+            petFileList = Lists.newArrayList();
+            for (PetFile petFile : hospitalHeadPicList) {
+                if (petHospital.getHospitalId().equals(petFile.getHospitalId())) {
+                    petFileList.add(petFile);
+                }
+            }
+            hospitalVO.setHospitalHeadPortrait(petFileList);
+
+
+            petFileList = Lists.newArrayList();
+            for (PetFile petFile : hospitalBusinessPicList) {
+                if (petHospital.getHospitalId().equals(petFile.getHospitalId())) {
+                    petFileList.add(petFile);
+                }
+            }
+            hospitalVO.setBusinessLicense(petFileList);
+
+
+            HospitalInfoVO hospitalInfoVO;
+            for (PetHospitalInfo hospitalInfo : hospitalInfoList) {
+                if (hospitalInfo.getHospitalId().equals(petHospital.getHospitalId())) {
+                    hospitalInfoVO = new HospitalInfoVO();
+                    BeanUtils.copyProperties(hospitalInfo, hospitalInfoVO);
+                    hospitalVO.setHospitalInfoVO(hospitalInfoVO);
+                }
+            }
+
             hospitalVOList.add(hospitalVO);
         }
 
@@ -172,10 +232,10 @@ public class HospitalServiceImpl implements HospitalService {
     @Override
     public KVResult medicalAppointments(Integer hospitalId, Integer userId) {
 
-        List<PetInsurancePolicy> insurancePolicyList = insurancePolicyService.findByUserIdAndInsuranceStatus(userId,3);
+        List<PetInsurancePolicy> insurancePolicyList = insurancePolicyService.findByUserIdAndInsuranceStatus(userId, 3);
 
-        if (insurancePolicyList.size()<=0) {
-            return KVResult.put(411,"您的保单不在保障期或未开通保单");
+        if (insurancePolicyList.size() <= 0) {
+            return KVResult.put(411, "您的保单不在保障期或未开通保单");
         }
 
         PetInsurancePolicy insurancePolicy = insurancePolicyList.get(0);
@@ -185,8 +245,8 @@ public class HospitalServiceImpl implements HospitalService {
         if (reservationInfo != null) {
             if (reservationInfo.getHospitalId().equals(hospitalId)) {
                 return KVResult.put(HttpStatus.OK);
-            }else {
-                return KVResult.put(412,"您已经预约其他医院，请前往就诊或取消预约");
+            } else {
+                return KVResult.put(412, "您已经预约其他医院，请前往就诊或取消预约");
             }
         }
 
@@ -219,18 +279,279 @@ public class HospitalServiceImpl implements HospitalService {
     }
 
     @Override
-    public KVResult bindingElectronicCard(Integer paramInteger1, Integer paramInteger2, String paramString, Integer paramInteger3) {
-        return null;
-    }
+    public KVResult bindingElectronicCard(Integer insurancePolicyId,Integer insuranceStatus,String electronicCard, Integer hospitalInfoId) {
+        PetInsurancePolicy insurancePolicy =  insurancePolicyService.findByInsurancePolicyId(insurancePolicyId);
 
-    @Override
-    public KVResult getInsurancePolicyDetails(Integer paramInteger1, Integer paramInteger2) {
-        return null;
+        if (insurancePolicy == null) {
+            return KVResult.put(411,"保单不存在");
+        }
+
+        insurancePolicy.setInsuranceStatus(insuranceStatus);
+        insurancePolicyService.save(insurancePolicy);
+        PetAnimal animal = animalRepository.findByAnimalId(insurancePolicy.getAnimalId());
+        if (animal == null) {
+            return KVResult.put(412,"保单未绑定宠物");
+        }
+        animal.setElectronicCard(electronicCard);
+
+        animalRepository.save(animal);
+
+
+        PetHospitalAccount hospitalAccount = new PetHospitalAccount();
+        hospitalAccount.setHospitalId(hospitalInfoId);
+        hospitalAccount.setMoney(20.0D);
+        hospitalAccount.setType(1);
+        hospitalAccount.setDate(new Date());
+        hospitalAccount.setSource("绑定电子卡");
+        hospitalAccount.setRatio(0);
+        hospitalAccount.setState(1);
+        hospitalAccount.setWithdrawalId(0);
+        hospitalAccountRepository.save(hospitalAccount);
+
+
+        return KVResult.put(HttpStatus.OK);
     }
 
     @Override
     public KVResult addDiagnosticInfo(DiagnosticDTO paramDiagnosticDTO, Integer paramInteger) {
-        return null;
+
+        PetInsurancePolicy insurancePolicy = insurancePolicyService.findByInsurancePolicyId(paramDiagnosticDTO.getInsurancePolicyId());
+        if (insurancePolicy == null) {
+            return KVResult.put(411,"保单不存在");
+        }
+
+        PetCompensateDetails compensateDetails = new PetCompensateDetails();
+        compensateDetails.setCompensateId(0);
+        compensateDetails.setInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
+        compensateDetails.setUserId(insurancePolicy.getUserId());
+        compensateDetails.setClaimStatus(1);
+        compensateDetails.setAuditStatus(1);
+        compensateDetails.setCompensateStatus(1);
+        compensateDetails.setAuditExplain("审核说明");
+        compensateDetails.setApplicationDate(new Date());
+        compensateDetails.setUpdateDate(new Date());
+        compensateDetails.setInsuranceName("保险名称");
+        compensateDetails.setInsuranceStartDate(new Date());
+        compensateDetails.setInsuranceEndDate(new Date());
+        compensateDetails.setCardNumber("卡号");
+        compensateDetails.setName("姓名");
+        compensateDetails.setAddress("地址");
+        compensateDetailsRepository.save(compensateDetails);
+
+
+        List<Long> insuranceDiseaseIdList = paramDiagnosticDTO.getInsuranceDiseaseIdList();
+
+        if (insuranceDiseaseIdList != null && insuranceDiseaseIdList.size() > 0) {
+            PetMedicalInfo medicalInfo;
+            List<PetMedicalInfo> medicalInfoList = new ArrayList<>();
+            for (Long aLong : insuranceDiseaseIdList) {
+                medicalInfo = new PetMedicalInfo();
+                medicalInfo.setMedicalDate(new Date());
+                medicalInfo.setInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
+                medicalInfo.setInsuranceDiseaseId(aLong);
+                medicalInfo.setMedicalAdvice("就诊说明");
+                medicalInfoList.add(medicalInfo);
+            }
+
+            if(medicalInfoList.size()>0){
+                medicalInfoRepository.saveAll(medicalInfoList);
+            }
+        }
+
+
+
+
+
+
+
+        return KVResult.put(HttpStatus.OK);
+    }
+
+    @Override
+    public KVResult addPromoter(PromoterDTO promoterDTO, Integer adminId) {
+
+        PetPromoter promoter;
+        if (promoterDTO.getPromoterId() != null && promoterDTO.getPromoterId() != 0) {
+            promoter = promoterRepository.findByPromoterId(promoterDTO.getPromoterId());
+            if (promoter == null) {
+                return KVResult.put(411, "推广员不存在");
+            }
+        } else {
+            promoter = new PetPromoter();
+            promoter.setCreateDate(new Date());
+        }
+        BeanUtils.copyProperties(promoterDTO, promoter);
+        promoter = promoterRepository.save(promoter);
+
+        FileUploadDTO fileUploadDTO = new FileUploadDTO();
+        List<FileDTO> saveFileList = Lists.newArrayList();
+
+        if (promoterDTO.getIdentityCard() != null) {
+            List<FileDTO> fileDTOList = promoterDTO.getIdentityCard().getFileDTOList();
+            for (FileDTO fileDTO : fileDTOList) {
+                fileDTO.setFileType(FileType.IDENTITY_CARD_INFO);
+                fileDTO.setPromoterId(promoter.getPromoterId());
+                saveFileList.add(fileDTO);
+            }
+
+        }
+
+        if (promoterDTO.getBankCard() != null) {
+            List<FileDTO> fileDTOList = promoterDTO.getBankCard().getFileDTOList();
+            for (FileDTO fileDTO : fileDTOList) {
+                fileDTO.setFileType(FileType.BANK_CARD_INFO);
+                fileDTO.setPromoterId(promoter.getPromoterId());
+                saveFileList.add(fileDTO);
+            }
+        }
+        fileUploadDTO.setFileDTOList(saveFileList);
+
+        System.out.println(fileUploadDTO);
+        fileService.upload(fileUploadDTO, adminId);
+
+
+        return KVResult.put(HttpStatus.OK);
+    }
+
+    @Override
+    public KVResult getPromoterPage(Integer page, Integer size, Integer state, Integer adminId) {
+
+        Pageable pageable = PageRequest.of(page, 10, Sort.Direction.DESC, "promoterId");
+        Page<PetPromoter> promoterPage = promoterRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> list = new ArrayList<>();
+
+
+            if (state != null && state != 0) {
+                list.add(criteriaBuilder.equal(root.get("state").as(Integer.class), state));
+            }
+
+
+            Predicate[] p = new Predicate[list.size()];
+            return criteriaBuilder.and(list.toArray(p));
+        }, pageable);
+
+        PageVo<PromoterVO> promoterPageVo = new PageVo<>();
+
+        List<PetPromoter> content = promoterPage.getContent();
+        List<Integer> promoterIdList = Lists.newArrayList();
+        for (PetPromoter promoter : content) {
+            promoterIdList.add(promoter.getPromoterId());
+        }
+        BeanUtils.copyProperties(promoterPage, promoterPageVo);
+
+
+        List<PetFile> IDENTITY_CARD = fileService.findAllByFileTypeAndStateAndPromoterIdIn(FileType.IDENTITY_CARD_INFO, 1, promoterIdList);
+        List<PetFile> BANK_CARD = fileService.findAllByFileTypeAndStateAndPromoterIdIn(FileType.BANK_CARD_INFO, 1, promoterIdList);
+
+
+        PromoterVO promoterVO;
+        List<PromoterVO> promoterVOList = Lists.newArrayList();
+
+        for (PetPromoter promoter : content) {
+            promoterVO = new PromoterVO();
+            BeanUtils.copyProperties(promoter, promoterVO);
+            List<PetFile> petFileList = Lists.newArrayList();
+            for (PetFile petFile : IDENTITY_CARD) {
+                if (petFile.getPromoterId().equals(promoter.getPromoterId())) {
+                    petFileList.add(petFile);
+                }
+            }
+            promoterVO.setIdentityCard(petFileList);
+
+            petFileList = Lists.newArrayList();
+            for (PetFile petFile : BANK_CARD) {
+                if (petFile.getPromoterId().equals(promoter.getPromoterId())) {
+                    petFileList.add(petFile);
+                }
+            }
+            promoterVO.setBankCard(petFileList);
+
+            promoterVOList.add(promoterVO);
+        }
+
+
+        promoterPageVo.setContent(promoterVOList);
+
+        return KVResult.put(promoterPageVo);
+    }
+
+    @Override
+    public KVResult getInsurancePolicyDetails(String phone,String cardNum, Integer hospitalInfoId) {
+
+        if(StringUtils.isEmpty(phone) && StringUtils.isEmpty(cardNum)){
+            return KVResult.put(411,"用户不存在");
+        }
+        PetUserInfo userInfo;
+        if(!StringUtils.isEmpty(phone)){
+            userInfo = userInfoRepository.findByPhone(phone);
+        }else {
+            PetAnimal animal = animalRepository.findByElectronicCard(cardNum);
+            userInfo = userInfoRepository.findByUserId(animal.getUserId());
+        }
+
+        if (userInfo == null) {
+            return KVResult.put(411, "用户不存在");
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(userInfo,userVO);
+
+        List<PetInsurancePolicy> insurancePolicyList = insurancePolicyService.findByUserIdAndInsuranceStatus(userInfo.getUserId(), 2);
+        insurancePolicyList.addAll(insurancePolicyService.findByUserIdAndInsuranceStatus(userInfo.getUserId(), 3));
+
+        if (insurancePolicyList == null || insurancePolicyList.size() <= 0) {
+            return KVResult.put(412, "用户没有保单信息");
+        }
+        InsurancePolicyVO insurancePolicyVO;
+        List<InsurancePolicyVO> insurancePolicyVOList = new ArrayList<>();
+        for (PetInsurancePolicy insurancePolicy : insurancePolicyList) {
+
+             insurancePolicyVO = new InsurancePolicyVO();
+             BeanUtils.copyProperties(insurancePolicy,insurancePolicyVO);
+
+            //保单疾病
+            List<PetInsuranceDisease> insuranceDiseaseList = insuranceDiseaseRepository.findAllByInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
+            InsuranceDiseaseVO insuranceDiseaseVO;
+            List<InsuranceDiseaseVO> insuranceDiseaseVOList = new ArrayList<>();
+            for (PetInsuranceDisease insuranceDisease : insuranceDiseaseList) {
+                insuranceDiseaseVO = new InsuranceDiseaseVO();
+                BeanUtils.copyProperties(insuranceDisease, insuranceDiseaseVO);
+                insuranceDiseaseVOList.add(insuranceDiseaseVO);
+            }
+            insurancePolicyVO.setInsuranceDiseaseVOList(insuranceDiseaseVOList);
+
+            //保险详情
+            PetInsurance insurance = insuranceRepository.findByInsuranceId(insurancePolicy.getInsuranceId());
+            InsuranceVO insuranceVO = new InsuranceVO();
+            BeanUtils.copyProperties(insurance,insuranceVO);
+            insurancePolicyVO.setInsuranceVO(insuranceVO);
+
+            //宠物信息
+            PetAnimal animal = animalRepository.findByAnimalId(insurancePolicy.getAnimalId());
+            PetAnimalVO animalVO = new PetAnimalVO();
+            BeanUtils.copyProperties(animal,animalVO);
+            insurancePolicyVO.setAnimalVO(animalVO);
+
+            //疾病分类
+            List<PetDiseaseTypes> diseaseTypes = diseaseTypesRepository.findAll();
+            insurancePolicyVO.setTypes(diseaseTypes);
+
+            //就诊信息
+            List<PetMedicalInfo> medicalInfoList = medicalInfoRepository.findAllByInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
+            PetMedicalInfoVO medicalInfoVO;
+            List<PetMedicalInfoVO> medicalInfoVOList = new ArrayList<>();
+            for (PetMedicalInfo medicalInfo : medicalInfoList) {
+                medicalInfoVO = new PetMedicalInfoVO();
+                BeanUtils.copyProperties(medicalInfo,medicalInfoVO);
+                medicalInfoVOList.add(medicalInfoVO);
+            }
+            insurancePolicyVO.setMedicalInfoList(medicalInfoVOList);
+
+            insurancePolicyVO.setUserVO(userVO);
+            insurancePolicyVOList.add(insurancePolicyVO);
+        }
+
+
+        return KVResult.put(insurancePolicyVOList);
     }
 
 

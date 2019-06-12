@@ -5,8 +5,8 @@ import lombok.Data;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.ykkoo.pet.utils.wechat.pay.TenPayConfig.API_KEY;
-import static com.ykkoo.pet.utils.wechat.pay.TenPayConfig.DEFAULT_CHARSET;
+import static com.ykkoo.pet.utils.wechat.WeChatConfig.API_KEY;
+import static com.ykkoo.pet.utils.wechat.WeChatConfig.DEFAULT_CHARSET;
 import static com.ykkoo.pet.utils.wechat.pay.utls.Sign.createSign;
 import static com.ykkoo.pet.utils.wechat.pay.utls.XmlUtil.getRequestXml;
 
@@ -81,7 +81,9 @@ public class WxPayDTO {
      */
     private String scene_info;
 
-    public WxPayDTO(String appid, String mch_id, String body, String attach, String out_trade_no, Integer total_fee, String spbill_create_ip, String notify_url,String trade_type) {
+    private String openid;
+
+    public WxPayDTO(String appid, String mch_id, String body, String attach, String out_trade_no, Integer total_fee, String spbill_create_ip, String notify_url,String trade_type,String openid) {
         this.appid = appid;
         this.mch_id = mch_id;
         this.body = body;
@@ -91,6 +93,7 @@ public class WxPayDTO {
         this.spbill_create_ip = spbill_create_ip;
         this.notify_url = notify_url;
         this.trade_type = trade_type;
+        this.openid = openid;
     }
 
 
@@ -101,32 +104,34 @@ public class WxPayDTO {
         String strRandom = String.valueOf(TenpayUtil.buildRandom(4));
         String strReq = strTime + strRandom;
 
-        Map<Object, Object> params = new TreeMap<>();
-        //应用ID
-        params.put("appid", appid);
-        //自定义数据包
-        params.put("attach", attach);
-        //商品描述
-        params.put("body", body);
-        //商户ID
-        params.put("mch_id", mch_id);
-        //随机字符串
+        Map<Object, Object> params = new TreeMap();
+
+        params.put("appid", this.appid);
+
+        params.put("attach", this.attach);
+
+        params.put("body", this.body);
+
+        params.put("mch_id", this.mch_id);
+
         params.put("nonce_str", strReq);
-        //通知地址
-        params.put("notify_url", nonce_str);
-        //商户订单号
+
+        params.put("notify_url", this.notify_url);
+
         params.put("out_trade_no", this.out_trade_no);
-        //终端IP
+
         params.put("spbill_create_ip", this.spbill_create_ip);
-        //总金额
+
         params.put("total_fee", this.total_fee);
-        //交易类型
-        params.put("trade_type", trade_type);
 
-        params.put("sign", createSign(DEFAULT_CHARSET, params, API_KEY));
+        params.put("openid", this.openid);
 
+        params.put("trade_type", this.trade_type);
+        String sign = Sign.createSign("UTF-8", params, API_KEY);
 
-        return getRequestXml(params);
+        params.put("sign", sign);
+
+        return XmlUtil.getRequestXml(params);
 
     }
 }

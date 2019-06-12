@@ -3,6 +3,8 @@ package com.ykkoo.pet.service;
 import com.ykkoo.pet.common.http.KVResult;
 import com.ykkoo.pet.dto.UserInfoDTO;
 import com.ykkoo.pet.pojo.PetUserInfo;
+import com.ykkoo.pet.vo.UserVO;
+
 import java.util.List;
 
 public abstract interface UserService
@@ -15,11 +17,11 @@ public abstract interface UserService
   
   public abstract PetUserInfo save(PetUserInfo paramPetUserInfo);
   
-  public abstract KVResult getUserInfo(Integer paramInteger);
+  public abstract KVResult<UserVO> getUserInfo(Integer paramInteger);
   
   public abstract PetUserInfo findByPhone(String paramString);
   
-  public abstract KVResult getUserPage(Integer paramInteger1, Integer paramInteger2, String paramString1, String paramString2, String paramString3, String paramString4, Integer paramInteger3, Integer paramInteger4);
+  public abstract KVResult getUserPage(Integer page, Integer size, String phone,String nickName, String realName, String cardNumber, Integer adminId);
   
   public abstract List<PetUserInfo> findAllByUserIdIn(List<Integer> paramList);
 }

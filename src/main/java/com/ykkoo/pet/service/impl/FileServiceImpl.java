@@ -1,4 +1,5 @@
 package com.ykkoo.pet.service.impl;
+import java.util.Date;
 
 import java.io.IOException;
 import java.util.*;
@@ -18,6 +19,8 @@ import com.ykkoo.pet.utils.SnowflakeIdFactory;
 import com.ykkoo.pet.utils.UploadFileUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -66,7 +69,7 @@ public class FileServiceImpl implements FileService {
             return KVResult.put(410, resultMap);
         }
 
-        SnowflakeIdFactory sf = new SnowflakeIdFactory(SnowflakeIdFactory.getWorkerId(), 1000);
+        SnowflakeIdFactory sf = new SnowflakeIdFactory(SnowflakeIdFactory.getWorkerId(), 12);
         List<PetFile> petFileList = Lists.newArrayList();
         PetFile petFile;
 
@@ -89,7 +92,7 @@ public class FileServiceImpl implements FileService {
                 fileDTO.setFileName(String.format("%s.%s", String.valueOf(System.currentTimeMillis()), suffix));
             }
 
-            String path = String.format("%s%s", fileDTO.getUploadPath(), fileDTO.getFileName());
+            String path = String.format("%s%s/%s", fileDTO.getUploadPath(),String.valueOf(System.currentTimeMillis()), fileDTO.getFileName());
 
             String fileUrl = null;
 
@@ -110,10 +113,15 @@ public class FileServiceImpl implements FileService {
                 petFile.setFileUrl(fileUrl);
                 petFile.setJumpLink(fileDTO.getJumpLink());
                 petFile.setFileType(fileDTO.getFileType());
+                petFile.setInsuranceId(fileDTO.getInsuranceId());
+                petFile.setHospitalId(fileDTO.getHospitalId());
+                petFile.setCompensateId(fileDTO.getCompensateId());
+                petFile.setReservationId(fileDTO.getReservationId());
+                petFile.setSequence(fileDTO.getSequence());
                 petFile.setState(fileDTO.getState());
                 petFile.setUploadDate(new Date());
                 petFile.setAdminId(adminId);
-                petFile.setInsuranceId(fileDTO.getInsuranceId());
+                petFile.setPromoterId(fileDTO.getPromoterId());
 
                 petFileList.add(petFile);
 
@@ -122,8 +130,7 @@ public class FileServiceImpl implements FileService {
             }
 
         }
-
-        petFileRepository.saveAll(petFileList);
+        List<PetFile> petFileList1 = petFileRepository.saveAll(petFileList);
 
         resultMap.put("total", total);
         resultMap.put("successNum", successNum);
@@ -141,7 +148,7 @@ public class FileServiceImpl implements FileService {
             fileDTO.setFileName(String.valueOf(System.currentTimeMillis()));
         }
 
-        String path = String.format("%s%s", fileDTO.getUploadPath(), fileDTO.getFileName());
+        String path = String.format("%s%s/%s", fileDTO.getUploadPath(),String.valueOf(System.currentTimeMillis()), fileDTO.getFileName());
 
         String fileUrl = null;
         try {
@@ -150,18 +157,24 @@ public class FileServiceImpl implements FileService {
             e.printStackTrace();
             log.error("图片上传失败 FileServiceImpl:81");
         }
-        SnowflakeIdFactory sf = new SnowflakeIdFactory(SnowflakeIdFactory.getWorkerId(), 1000);
+        SnowflakeIdFactory sf = new SnowflakeIdFactory(SnowflakeIdFactory.getWorkerId(), 13);
         PetFile petFile = null;
+
+
         if (!StringUtils.isEmpty(fileUrl)) {
             petFile = new PetFile();
             petFile.setFileId(sf.nextId());
             petFile.setFileUrl(fileUrl);
             petFile.setJumpLink(fileDTO.getJumpLink());
             petFile.setFileType(fileDTO.getFileType());
+            petFile.setInsuranceId(fileDTO.getInsuranceId());
+            petFile.setHospitalId(fileDTO.getHospitalId());
+            petFile.setCompensateId(fileDTO.getCompensateId());
+            petFile.setReservationId(fileDTO.getReservationId());
+            petFile.setSequence(fileDTO.getSequence());
             petFile.setState(fileDTO.getState());
             petFile.setUploadDate(new Date());
             petFile.setAdminId(adminId);
-            petFile.setInsuranceId(fileDTO.getInsuranceId());
             petFile = petFileRepository.save(petFile);
         }
 
@@ -189,13 +202,28 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public List<PetFile> findAllByFileTypeAndStateAndPromoterIdIn(FileType paramFileType, int paramInt,  List<Integer> paramInteger) {
+        return petFileRepository.findAllByFileTypeAndStateAndPromoterIdIn(paramFileType,paramInt,paramInteger);
+    }
+
+    @Override
     public List<PetFile> findAllByFileTypeAndStateAndInsuranceIdIn(FileType paramFileType, int paramInt, List<Integer> paramList) {
         return null;
     }
 
     @Override
     public KVResult update(FileUpdateDTO paramFileUpdateDTO, Integer paramInteger) {
-        return null;
+
+        if (paramFileUpdateDTO.getFileId() != null) {
+            PetFile petFile = petFileRepository.findByFileId(paramFileUpdateDTO.getFileId());
+
+            if (petFile != null) {
+                BeanUtils.copyProperties(paramFileUpdateDTO,petFile);
+                petFileRepository.save(petFile);
+            }
+        }
+
+        return KVResult.put(HttpStatus.OK);
     }
 
     @Override

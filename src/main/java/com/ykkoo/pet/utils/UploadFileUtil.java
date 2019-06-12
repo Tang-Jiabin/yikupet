@@ -25,7 +25,7 @@ public class UploadFileUtil {
 
     private static final String ACCESS_KEY = "xlaA9j8z9qY_TlxI8i_Z3hnGoJxCDC8FP98tcs-x";
     private static final String SECRET_KEY = "iZBPiyEuxyzHQpVdV4Ddf1wT5bCXvKvLmLp1y34K";
-    private static final String PET = "console";
+    private static final String PET = "pet";
     private static final String PET_URL = "http://pet.ykkoo.com/";
 
 

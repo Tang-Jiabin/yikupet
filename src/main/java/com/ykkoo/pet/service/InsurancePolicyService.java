@@ -5,6 +5,8 @@ import com.ykkoo.pet.dto.ClaimsVoucherDTO;
 import com.ykkoo.pet.dto.InsurancePolicyDTO;
 import com.ykkoo.pet.pojo.PetInsurancePolicy;
 import com.ykkoo.pet.vo.InsuranceDiseaseVO;
+import com.ykkoo.pet.vo.InsurancePolicyVO;
+
 import java.util.List;
 
 public abstract interface InsurancePolicyService
@@ -15,7 +17,7 @@ public abstract interface InsurancePolicyService
   
   public abstract KVResult getInsurancePolicyPage(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, Integer paramInteger4, Integer paramInteger5, Integer paramInteger6);
   
-  public abstract KVResult getInsurancePolicyDetails(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3);
+  public abstract KVResult<InsurancePolicyVO> getInsurancePolicyDetails(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3);
   
   public abstract KVResult getCompensateDetails(Integer paramInteger1, Integer paramInteger2);
   
@@ -27,7 +29,7 @@ public abstract interface InsurancePolicyService
   
   public abstract List<InsuranceDiseaseVO> findAllInsuranceDiseaseByReservationId(Integer paramInteger);
   
-  public abstract KVResult getCompensatePage(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, String paramString, Integer paramInteger4, Integer paramInteger5);
+  public abstract KVResult getCompensatePage(Integer page, Integer size, Integer claimStatus, String phone, Integer userId, Integer adminId);
   
   public abstract KVResult updateCompensateInfo(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, String paramString, Integer paramInteger4);
   

@@ -3,6 +3,7 @@ package com.ykkoo.pet.service;
 import com.ykkoo.pet.common.http.KVResult;
 import com.ykkoo.pet.dto.DiagnosticDTO;
 import com.ykkoo.pet.dto.HospitalDTO;
+import com.ykkoo.pet.dto.PromoterDTO;
 import com.ykkoo.pet.pojo.PetHospitalInfo;
 import com.ykkoo.pet.pojo.PetReservationInfo;
 import java.util.Date;
@@ -12,7 +13,7 @@ public abstract interface HospitalService
 {
   public abstract KVResult addHospital(HospitalDTO paramHospitalDTO, Integer paramInteger);
   
-  public abstract KVResult getHospitalPage(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, Integer paramInteger4, Integer paramInteger5, String paramString1, String paramString2, Integer paramInteger6);
+  public abstract KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer v2);
   
   public abstract KVResult medicalAppointments(Integer paramInteger1, Integer paramInteger2);
   
@@ -22,11 +23,16 @@ public abstract interface HospitalService
   
   public abstract PetHospitalInfo findByHospitalInfoId(Integer paramInteger);
   
-  public abstract KVResult bindingElectronicCard(Integer paramInteger1, Integer paramInteger2, String paramString, Integer paramInteger3);
+  public abstract KVResult bindingElectronicCard(Integer insurancePolicyId,Integer insuranceStatus,String electronicCard, Integer hospitalInfoId);
   
-  public abstract KVResult getInsurancePolicyDetails(Integer paramInteger1, Integer paramInteger2);
-  
+
   public abstract KVResult addDiagnosticInfo(DiagnosticDTO paramDiagnosticDTO, Integer paramInteger);
+
+  KVResult addPromoter(PromoterDTO promoterDTO, Integer adminId);
+
+  KVResult getPromoterPage(Integer page, Integer size, Integer state, Integer adminId);
+
+    KVResult getInsurancePolicyDetails(String phone,String cardNum, Integer hospitalInfoId);
 }
 
 

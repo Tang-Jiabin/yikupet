@@ -15,7 +15,14 @@ public abstract interface InsuranceService
   
   public abstract List<PetInsurance> findAllByInsuranceIdIn(List<Integer> paramList);
   
-  public abstract KVResult getInsurancePage(Integer paramInteger1, Integer paramInteger2, String paramString, Integer paramInteger3, Integer paramInteger4, Integer paramInteger5);
+  public abstract KVResult getInsurancePage(Integer page,Integer size, String insuranceName,Integer insuranceType,Integer insuranceState,Integer adminId);
+
+  KVResult addDiseaseType(Integer typeId ,String typeName, Integer adminId);
+
+  KVResult deleteDiseaseType(Integer typeId);
+
+  KVResult getDiseaseType();
+
 }
 
 

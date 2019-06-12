@@ -11,11 +11,9 @@ import com.ykkoo.pet.dto.DiseaseDTO;
 import com.ykkoo.pet.dto.FileDTO;
 import com.ykkoo.pet.dto.FileUploadDTO;
 import com.ykkoo.pet.dto.InsuranceDTO;
-import com.ykkoo.pet.pojo.PetDisease;
-import com.ykkoo.pet.pojo.PetFile;
-import com.ykkoo.pet.pojo.PetInsurance;
-import com.ykkoo.pet.pojo.PetInsuranceEvaluation;
+import com.ykkoo.pet.pojo.*;
 import com.ykkoo.pet.repository.PetDiseaseRepository;
+import com.ykkoo.pet.repository.PetDiseaseTypesRepository;
 import com.ykkoo.pet.repository.PetFileRepository;
 import com.ykkoo.pet.repository.PetInsuranceRepository;
 import com.ykkoo.pet.service.FileService;
@@ -27,11 +25,19 @@ import com.ykkoo.pet.vo.InsuranceEvaluationVO;
 import com.ykkoo.pet.common.http.KVResult;
 import com.ykkoo.pet.service.InsuranceService;
 import com.ykkoo.pet.vo.InsuranceVO;
+import com.ykkoo.pet.vo.PageVo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import javax.persistence.criteria.Predicate;
 
 /**
  * 保险
@@ -50,11 +56,12 @@ public class InsuranceServiceImpl implements InsuranceService {
     private FileService fileService;
     private InsuranceEvaluationService evaluationService;
     private PetDiseaseRepository diseaseRepository;
+    private PetDiseaseTypesRepository diseaseTypesRepository;
 
     @Override
     public KVResult findInsuranceByType(Integer type) {
 
-        List<PetInsurance> insuranceList = insuranceRepository.findAllByInsuranceType(type);
+        List<PetInsurance> insuranceList = insuranceRepository.findAllByInsuranceTypeAndInsuranceState(type, 1);
 
         List<InsuranceVO> insuranceVOList = Lists.newArrayList();
         InsuranceVO insuranceVO;
@@ -149,6 +156,9 @@ public class InsuranceServiceImpl implements InsuranceService {
             petDisease = new PetDisease();
             BeanUtils.copyProperties(diseaseDTO, petDisease);
             petDisease.setInsuranceId(petInsurance.getInsuranceId());
+            if (petDisease.getTypeId() == null) {
+                petDisease.setTypeId(0);
+            }
             diseaseList.add(petDisease);
         }
         diseaseRepository.saveAll(diseaseList);
@@ -167,8 +177,81 @@ public class InsuranceServiceImpl implements InsuranceService {
     }
 
     @Override
-    public KVResult getInsurancePage(Integer paramInteger1, Integer paramInteger2, String paramString, Integer paramInteger3, Integer paramInteger4, Integer paramInteger5) {
-        return null;
+    public KVResult getInsurancePage(Integer page, Integer size, String insuranceName, Integer insuranceType, Integer insuranceState, Integer adminId) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "insuranceId");
+        Page<PetInsurance> insurancePage = insuranceRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> list = new ArrayList<>();
+
+
+            if (!StringUtils.isEmpty(insuranceName)) {
+                list.add(criteriaBuilder.equal(root.get("insuranceName").as(Integer.class), insuranceName));
+            }
+
+            if (null != insuranceType && 0 != insuranceType) {
+                list.add(criteriaBuilder.equal(root.get("insuranceType").as(Integer.class), insuranceType));
+            }
+
+            if (null != insuranceState && 0 != insuranceState) {
+                list.add(criteriaBuilder.equal(root.get("insuranceState").as(Integer.class), insuranceState));
+            }
+
+            Predicate[] p = new Predicate[list.size()];
+            return criteriaBuilder.and(list.toArray(p));
+        }, pageable);
+
+        InsuranceVO insuranceVO;
+        List<InsuranceVO> insuranceVOList = Lists.newArrayList();
+        PageVo<InsuranceVO> insuranceVOPageVo = new PageVo<>();
+
+        List<PetInsurance> content = insurancePage.getContent();
+
+        BeanUtils.copyProperties(insurancePage, insuranceVOPageVo);
+
+        for (PetInsurance insurance : content) {
+            insuranceVO = new InsuranceVO();
+            BeanUtils.copyProperties(insurance, insuranceVO);
+
+            insuranceVOList.add(insuranceVO);
+        }
+
+        return KVResult.put(insuranceVOPageVo);
+    }
+
+    @Override
+    public KVResult addDiseaseType(Integer typeId, String typeName, Integer adminId) {
+        PetDiseaseTypes diseaseTypes;
+        if (typeId != 0) {
+            diseaseTypes = diseaseTypesRepository.findByTypeId(typeId);
+
+            if (diseaseTypes == null) {
+                return KVResult.put(411, "不存在");
+            }
+        } else {
+            diseaseTypes = new PetDiseaseTypes();
+        }
+
+        diseaseTypes.setTypeName(typeName);
+        PetDiseaseTypes save = diseaseTypesRepository.save(diseaseTypes);
+        return KVResult.put(save);
+    }
+
+    @Override
+    public KVResult deleteDiseaseType(Integer typeId) {
+        PetDiseaseTypes diseaseTypes = diseaseTypesRepository.findByTypeId(typeId);
+
+        if (diseaseTypes != null) {
+            diseaseTypesRepository.delete(diseaseTypes);
+        }
+
+        return KVResult.put(HttpStatus.OK);
+    }
+
+    @Override
+    public KVResult getDiseaseType() {
+
+        List<PetDiseaseTypes> diseaseTypesList = diseaseTypesRepository.findAll();
+        return KVResult.put(diseaseTypesList);
     }
 
 }

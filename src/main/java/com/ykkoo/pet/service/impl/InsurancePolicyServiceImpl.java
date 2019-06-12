@@ -1,5 +1,7 @@
 package com.ykkoo.pet.service.impl;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 import com.google.common.collect.Lists;
@@ -12,10 +14,9 @@ import com.ykkoo.pet.dto.FileDTO;
 import com.ykkoo.pet.dto.FileUploadDTO;
 import com.ykkoo.pet.dto.InsurancePolicyDTO;
 import com.ykkoo.pet.pojo.*;
-import com.ykkoo.pet.repository.PetCompensateDetailsRepository;
-import com.ykkoo.pet.repository.PetInsuranceDiseaseRepository;
-import com.ykkoo.pet.repository.PetInsurancePolicyRepository;
+import com.ykkoo.pet.repository.*;
 import com.ykkoo.pet.service.*;
+import com.ykkoo.pet.utils.RandomUtil;
 import com.ykkoo.pet.utils.wechat.pay.TenPay;
 import com.ykkoo.pet.vo.*;
 import lombok.AllArgsConstructor;
@@ -54,6 +55,8 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     private PetAnimalService animalService;
     private UserService userService;
     private FileService fileService;
+    private PetWechatUserInfoRepository wechatUserInfoRepository;
+    private PetDiseaseTypesRepository diseaseTypesRepository;
 
 
     @Override
@@ -75,6 +78,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
 
         //更新投保人信息
         PetUserInfo userInfo = updateUserInfo(insurancePolicyDTO, userId);
+        PetWechatUserInfo wechatUserInfo = wechatUserInfoRepository.findByUserInfoId(userId);
 
         //创建宠物信息
         PetAnimal animal = createAnimal(insurancePolicyDTO, userId, insurance);
@@ -82,15 +86,16 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         //创建保单
         PetInsurancePolicy insurancePolicy = createInsurancePolicy(userId, insurance, animal);
 
-        Map<String,Integer> info = Maps.newHashMap();
-        info.put("an",animal.getAnimalId());
-        info.put("ip",insurancePolicy.getInsurancePolicyId());
+        Map<String, Integer> info = Maps.newHashMap();
+        info.put("an", animal.getAnimalId());
+        info.put("ip", insurancePolicy.getInsurancePolicyId());
         String attach = new Gson().toJson(info);
+        String outTradeNo = getLogisticsOrderNo();
 
         String title = "微宠保障卡";
-        String pay = TenPay.pay(title, attach, "123", 1, insurancePolicyDTO.getIp());
+        String pay = TenPay.pay(title, attach, outTradeNo, insurance.getInsurancePrice() * 100, insurancePolicyDTO.getIp(), wechatUserInfo.getOpenid());
 
-        return KVResult.put(HttpStatus.OK,pay);
+        return KVResult.put(HttpStatus.OK, pay);
     }
 
     private PetInsurancePolicy createInsurancePolicy(Integer userId, PetInsurance insurance, PetAnimal animal) {
@@ -172,6 +177,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
             if (userId != null && userId != 0) {
                 list.add(criteriaBuilder.equal(root.get("userId").as(Integer.class), userId));
             }
+            list.add(criteriaBuilder.notEqual(root.get("insuranceStatus").as(Integer.class), 7));
             Predicate[] p = new Predicate[list.size()];
             return criteriaBuilder.and(list.toArray(p));
         }, pageable);
@@ -216,6 +222,23 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
                 }
             }
 
+            List<InsuranceDiseaseVO> insuranceDiseaseVOList = Lists.newArrayList();
+
+            List<PetInsuranceDisease> allByInsurancePolicyId = insuranceDiseaseRepository.findAllByInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
+
+            InsuranceDiseaseVO insuranceDiseaseVO;
+            for (PetInsuranceDisease insuranceDisease : allByInsurancePolicyId) {
+                insuranceDiseaseVO = new InsuranceDiseaseVO();
+                BeanUtils.copyProperties(insuranceDisease, insuranceDiseaseVO);
+                insuranceDiseaseVOList.add(insuranceDiseaseVO);
+            }
+
+            insurancePolicyVO.setInsuranceDiseaseVOList(insuranceDiseaseVOList);
+
+
+            KVResult<UserVO> userInfo = userService.getUserInfo(insurancePolicy.getUserId());
+            insurancePolicyVO.setUserVO(userInfo.getVal());
+
             insurancePolicyVOList.add(insurancePolicyVO);
         }
         insurancePolicyPageVo.setContent(insurancePolicyVOList);
@@ -224,12 +247,14 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult getInsurancePolicyDetails(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3) {
-        return null;
+    public KVResult<InsurancePolicyVO> getInsurancePolicyDetails(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3) {
+
+
+        return getInsurancePolicyDetails(paramInteger1, paramInteger2);
     }
 
-//    @Override
-    public KVResult getInsurancePolicyDetails(Integer insurancePolicyId, Integer userId) {
+
+    public KVResult<InsurancePolicyVO> getInsurancePolicyDetails(Integer insurancePolicyId, Integer userId) {
 
         PetInsurancePolicy insurancePolicy = insurancePolicyRepository.findByInsurancePolicyId(insurancePolicyId);
 
@@ -256,10 +281,11 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
             insuranceDiseaseVOList.add(insuranceDiseaseVO);
         }
 
+        List<PetDiseaseTypes> types = diseaseTypesRepository.findAll();
+        insurancePolicyVO.setTypes(types);
         insurancePolicyVO.setInsuranceVO(insuranceVO);
         insurancePolicyVO.setAnimalVO(animalVO);
         insurancePolicyVO.setInsuranceDiseaseVOList(insuranceDiseaseVOList);
-
 
         return KVResult.put(insurancePolicyVO);
     }
@@ -267,7 +293,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     @Override
     public KVResult getCompensateDetails(Integer insurancePolicyId, Integer userId) {
 
-        PetCompensateDetails compensateDetails = compensateDetailsRepository.findByInsurancePolicyIdAndCompensateStatus(insurancePolicyId, 1);
+        PetCompensateDetails compensateDetails = compensateDetailsRepository.findByCompensateId(insurancePolicyId);
         if (compensateDetails == null) {
             return KVResult.put(411, "暂无理赔信息");
         }
@@ -308,6 +334,10 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         PetCompensateDetails compensateDetails = new PetCompensateDetails();
         compensateDetails.setInsurancePolicyId(insurancePolicyId);
         compensateDetails.setCompensateStatus(1);
+        compensateDetails.setUserId(userId);
+        compensateDetails.setAuditStatus(1);
+        compensateDetails.setClaimStatus(1);
+        compensateDetails.setCompensateStatus(1);
         compensateDetails.setApplicationDate(new Date());
         compensateDetails.setUpdateDate(new Date());
         compensateDetails.setInsuranceName(insurance.getInsuranceName());
@@ -316,7 +346,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         compensateDetailsRepository.save(compensateDetails);
 
         CompensateDetailsVO compensateDetailsVO = new CompensateDetailsVO();
-        BeanUtils.copyProperties(compensateDetails,compensateDetailsVO);
+        BeanUtils.copyProperties(compensateDetails, compensateDetailsVO);
 
         return KVResult.put(compensateDetailsVO);
     }
@@ -324,32 +354,53 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     @Override
     public KVResult uploadClaimsVoucher(ClaimsVoucherDTO claimsVoucherDTO, Integer userId) {
 
+
         PetCompensateDetails compensateDetails = compensateDetailsRepository.findByCompensateId(claimsVoucherDTO.getCompensateId());
         if (compensateDetails == null) {
-            return KVResult.put(411,"尚未申请理赔");
+            return KVResult.put(411, "尚未申请理赔");
         }
-        List<FileDTO> claimDiagnosisList = claimsVoucherDTO.getClaimDiagnosisList();
-        List<FileDTO> claimInvoiceList = claimsVoucherDTO.getClaimInvoiceList();
+        List<FileDTO> save = Lists.newArrayList();
+        List<FileDTO> claimDiagnosisList = Lists.newArrayList();
+        List<FileDTO> claimInvoiceList = Lists.newArrayList();
+        if (claimsVoucherDTO.getClaimDiagnosisList() != null) {
+            claimDiagnosisList = claimsVoucherDTO.getClaimDiagnosisList();
+        }
+
+        if (claimsVoucherDTO.getClaimInvoiceList() != null) {
+            claimInvoiceList = claimsVoucherDTO.getClaimInvoiceList();
+        }
+
 
         for (FileDTO fileDTO : claimDiagnosisList) {
             fileDTO.setFileType(FileType.CLAIM_DIAGNOSIS);
             fileDTO.setCompensateId(claimsVoucherDTO.getCompensateId());
-            fileDTO.setUploadPath(String.format("compensate/%s/diagnosis/",claimsVoucherDTO.getCompensateId()));
+            fileDTO.setUploadPath(String.format("compensate/%s/diagnosis/", claimsVoucherDTO.getCompensateId()));
+            save.add(fileDTO);
         }
-        FileUploadDTO claimDiagnosis = new FileUploadDTO();
-        claimDiagnosis.setFileDTOList(claimDiagnosisList);
+
 
         for (FileDTO fileDTO : claimInvoiceList) {
             fileDTO.setFileType(FileType.CLAIM_INVOICE);
             fileDTO.setCompensateId(claimsVoucherDTO.getCompensateId());
-            fileDTO.setUploadPath(String.format("compensate/%s/invoice/",claimsVoucherDTO.getCompensateId()));
+            fileDTO.setUploadPath(String.format("compensate/%s/invoice/", claimsVoucherDTO.getCompensateId()));
+            save.add(fileDTO);
         }
-        FileUploadDTO claimInvoice = new FileUploadDTO();
-        claimDiagnosis.setFileDTOList(claimInvoiceList);
 
-        KVResult<Map<String, Object>> diagnosis = fileService.upload(claimDiagnosis, userId);
-        KVResult<Map<String, Object>> invoice = fileService.upload(claimInvoice, userId);
+        FileUploadDTO saveDTO = new FileUploadDTO();
+        saveDTO.setFileDTOList(save);
 
+        KVResult<Map<String, Object>> diagnosis = fileService.upload(saveDTO, userId);
+
+        if (!StringUtils.isEmpty(claimsVoucherDTO.getName())) {
+            compensateDetails.setName(claimsVoucherDTO.getName());
+        }
+        if (!StringUtils.isEmpty(claimsVoucherDTO.getCardNumber())) {
+            compensateDetails.setCardNumber(claimsVoucherDTO.getCardNumber());
+        }
+        if (!StringUtils.isEmpty(claimsVoucherDTO.getAddress())) {
+            compensateDetails.setAddress(claimsVoucherDTO.getAddress());
+        }
+        compensateDetailsRepository.save(compensateDetails);
 
         Map<String, Object> resultMap = Maps.newHashMap();
 
@@ -360,13 +411,9 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         List<String> fail = Lists.newArrayList();
 
         if (diagnosis.getKey() == 200) {
-            Map<String, Object> diagnosisMap = invoice.getVal();
-            getResultMap(total,successNum,failNum,success,fail,diagnosisMap);
+            Map<String, Object> diagnosisMap = diagnosis.getVal();
+            getResultMap(total, successNum, failNum, success, fail, diagnosisMap);
 
-        }
-        if (invoice.getKey()==200) {
-            Map<String, Object> invoiceMap = invoice.getVal();
-            getResultMap(total,successNum,failNum,success,fail,invoiceMap);
         }
 
         resultMap.put("total", total);
@@ -381,12 +428,71 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
 
     @Override
     public List<InsuranceDiseaseVO> findAllInsuranceDiseaseByReservationId(Integer paramInteger) {
-        return null;
+        List<PetInsuranceDisease> allByReservationId = insuranceDiseaseRepository.findAllByReservationId(paramInteger);
+
+        List<InsuranceDiseaseVO> insuranceDiseaseVOList = new ArrayList<>();
+        InsuranceDiseaseVO insuranceDiseaseVO;
+        for (PetInsuranceDisease insuranceDisease : allByReservationId) {
+            insuranceDiseaseVO = new InsuranceDiseaseVO();
+            BeanUtils.copyProperties(insuranceDisease, insuranceDiseaseVO);
+            insuranceDiseaseVOList.add(insuranceDiseaseVO);
+        }
+
+        return insuranceDiseaseVOList;
     }
 
     @Override
-    public KVResult getCompensatePage(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, String paramString, Integer paramInteger4, Integer paramInteger5) {
-        return null;
+    public KVResult getCompensatePage(Integer page, Integer size, Integer claimStatus, String phone, Integer userId, Integer adminId) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "compensateId");
+        Page<PetCompensateDetails> compensateDetailsPage = compensateDetailsRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> list = new ArrayList<>();
+
+
+            if (null != claimStatus && 0 != claimStatus) {
+                list.add(criteriaBuilder.equal(root.get("claimStatus").as(Integer.class), claimStatus));
+            }
+
+            if (null != userId && 0 != userId) {
+                list.add(criteriaBuilder.equal(root.get("userId").as(Integer.class), userId));
+            }
+
+            Predicate[] p = new Predicate[list.size()];
+            return criteriaBuilder.and(list.toArray(p));
+        }, pageable);
+
+
+        List<PetCompensateDetails> content = compensateDetailsPage.getContent();
+
+        PageVo<CompensateDetailsVO> pageVo = new PageVo<>();
+        BeanUtils.copyProperties(compensateDetailsPage, pageVo);
+
+        CompensateDetailsVO compensateDetailsVO;
+        List<CompensateDetailsVO> compensateDetailsVOList = Lists.newArrayList();
+        for (PetCompensateDetails compensateDetails : content) {
+            compensateDetailsVO = new CompensateDetailsVO();
+            BeanUtils.copyProperties(compensateDetails, compensateDetailsVO);
+
+            KVResult<InsurancePolicyVO> insurancePolicyDetails = getInsurancePolicyDetails(compensateDetails.getInsurancePolicyId(), userId, null);
+            compensateDetailsVO.setInsurancePolicyVO(insurancePolicyDetails.getVal());
+
+            KVResult<UserVO> userInfo = userService.getUserInfo(compensateDetails.getUserId());
+            compensateDetailsVO.setUserVO(userInfo.getVal());
+
+            List<PetFile> CLAIM_DIAGNOSIS = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_DIAGNOSIS, 1, compensateDetails.getCompensateId());
+            List<PetFile> CLAIM_INVOICE = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_INVOICE, 1, compensateDetails.getCompensateId());
+            List<PetFile> CLAIM_VOUCHER = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_VOUCHER, 1, compensateDetails.getCompensateId());
+            compensateDetailsVO.setClaimDiagnosis(CLAIM_DIAGNOSIS);
+            compensateDetailsVO.setClaimVoucher(CLAIM_VOUCHER);
+            compensateDetailsVO.setClaimInvoice(CLAIM_INVOICE);
+
+
+            compensateDetailsVOList.add(compensateDetailsVO);
+        }
+
+        pageVo.setContent(compensateDetailsVOList);
+
+        return KVResult.put(pageVo);
     }
 
     @Override
@@ -401,12 +507,12 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
 
     @Override
     public PetInsurancePolicy findByInsurancePolicyId(Integer paramInteger) {
-        return null;
+        return insurancePolicyRepository.findByInsurancePolicyId(paramInteger);
     }
 
     @Override
     public PetInsurancePolicy save(PetInsurancePolicy paramPetInsurancePolicy) {
-        return null;
+        return insurancePolicyRepository.save(paramPetInsurancePolicy);
     }
 
     @Override
@@ -414,13 +520,27 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         return null;
     }
 
-    private void getResultMap(int total,int successNum,int failNum,List<String> success,List<String> fail,Map<String, Object> map){
+    private void getResultMap(int total, int successNum, int failNum, List<String> success, List<String> fail, Map<String, Object> map) {
         total = (Integer) map.get("total");
         successNum = (Integer) map.get("successNum");
         failNum = (Integer) map.get("failNum");
-        success.addAll((ArrayList<String>)map.get("success"));
-        fail.addAll((ArrayList<String>)map.get("fail"));
+        success.addAll((ArrayList<String>) map.get("success"));
+        fail.addAll((ArrayList<String>) map.get("fail"));
     }
 
+    private static String getLogisticsOrderNo() {
+        //日期
+        LocalDate localDate = LocalDate.now();
+        String date = localDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        //时间戳
+        long timeMillis = System.currentTimeMillis();
+        String substring = String.valueOf(timeMillis).substring(6);
+
+        //随机数
+        int random = RandomUtil.getNextInt(100, 999);
+
+        //拼接
+        return String.format("%s%s%d", date, substring, random);
+    }
 
 }

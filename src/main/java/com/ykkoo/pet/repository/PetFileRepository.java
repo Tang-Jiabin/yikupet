@@ -26,6 +26,8 @@ public abstract interface PetFileRepository
   public abstract List<PetFile> findAllByFileTypeAndStateAndHospitalId(FileType paramFileType, int paramInt, Integer paramInteger);
   
   public abstract List<PetFile> findAllByFileTypeAndStateAndReservationId(FileType paramFileType, int paramInt, Integer paramInteger);
+
+    List<PetFile> findAllByFileTypeAndStateAndPromoterIdIn(FileType paramFileType, int paramInt,  List<Integer> paramInteger);
 }
 
 

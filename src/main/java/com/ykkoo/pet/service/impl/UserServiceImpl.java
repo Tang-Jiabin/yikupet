@@ -6,8 +6,11 @@ import com.ykkoo.pet.common.http.KVResult;
 import com.ykkoo.pet.common.token.TokenManage;
 import com.ykkoo.pet.common.token.TokenModel;
 import com.ykkoo.pet.dto.UserInfoDTO;
+import com.ykkoo.pet.pojo.PetAnimal;
+import com.ykkoo.pet.pojo.PetPromoter;
 import com.ykkoo.pet.pojo.PetUserInfo;
 import com.ykkoo.pet.pojo.PetWechatUserInfo;
+import com.ykkoo.pet.repository.PetAnimalRepository;
 import com.ykkoo.pet.repository.PetUserInfoRepository;
 import com.ykkoo.pet.repository.PetWechatUserInfoRepository;
 import com.ykkoo.pet.service.UserService;
@@ -18,9 +21,15 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Response;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +50,7 @@ public class UserServiceImpl implements UserService {
     private PetWechatUserInfoRepository wechatUserInfoRepository;
     private PetUserInfoRepository userInfoRepository;
     private TokenManage tokenManage;
+    private PetAnimalRepository animalRepository;
 
     @Override
     public KVResult smallLogin(String code) {
@@ -63,7 +73,7 @@ public class UserServiceImpl implements UserService {
             return KVResult.put(412, "code错误");
         }
 
-        if (0 != codeSession.getErrcode()) {
+        if (null != codeSession.getErrcode() && 0 != codeSession.getErrcode()) {
             return KVResult.put(codeSession.getErrcode(), codeSession.getErrmsg());
         }
 
@@ -120,7 +130,7 @@ public class UserServiceImpl implements UserService {
         PetUserInfo userInfo = userInfoRepository.findByUserId(userId);
 
         if (userInfo == null) {
-            return KVResult.put(411,"用户不存在");
+            return KVResult.put(411, "用户不存在");
         }
 
         userInfo.setHeadPortrait(userInfoDTO.getHeadPortrait());
@@ -130,39 +140,68 @@ public class UserServiceImpl implements UserService {
         userInfo = userInfoRepository.save(userInfo);
 
         UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(userInfo, userVO);
+
+        return KVResult.put(userVO);
+    }
+
+    @Override
+    public KVResult<UserVO> getUserInfo(Integer userId) {
+
+        PetUserInfo userInfo = findByUserId(userId);
+        if (userInfo == null) {
+            return KVResult.put(411,new UserVO());
+        }
+        UserVO userVO = new UserVO();
         BeanUtils.copyProperties(userInfo,userVO);
 
         return KVResult.put(userVO);
     }
 
     @Override
-    public KVResult getUserInfo(Integer userId) {
-
-        PetUserInfo userInfo = findByUserId(userId);
-
-        UserVO userVO = new UserVO();
-        userVO.setNickName(userInfo.getNickName());
-        userVO.setHeadPortrait(userInfo.getHeadPortrait());
-        userVO.setToken(userInfo.getToken());
-        userVO.setLoginDate(userInfo.getLoginDate());
-        userVO.setUpdateDate(userInfo.getUpdateDate());
-
-        return KVResult.put(userVO);
-    }
-
-    @Override
     public PetUserInfo findByPhone(String paramString) {
-        return null;
+        return userInfoRepository.findByPhone(paramString);
     }
 
     @Override
-    public KVResult getUserPage(Integer paramInteger1, Integer paramInteger2, String paramString1, String paramString2, String paramString3, String paramString4, Integer paramInteger3, Integer paramInteger4) {
-        return null;
+    public KVResult getUserPage(Integer page, Integer size, String phone,String nickName, String realName, String cardNumber, Integer adminId) {
+
+        Pageable pageable = PageRequest.of(page, 10, Sort.Direction.DESC, "userId");
+        Page<PetUserInfo> userInfoPage = userInfoRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> list = new ArrayList<>();
+
+            if (!StringUtils.isEmpty(phone)) {
+                list.add(criteriaBuilder.equal(root.get("phone").as(String.class), phone));
+            }
+
+            if (!StringUtils.isEmpty(nickName)) {
+                list.add(criteriaBuilder.equal(root.get("nickName").as(String.class), nickName));
+            }
+
+            if (!StringUtils.isEmpty(realName)) {
+                list.add(criteriaBuilder.equal(root.get("realName").as(String.class), realName));
+            }
+
+            if(!StringUtils.isEmpty(cardNumber)){
+                PetAnimal animal = animalRepository.findByElectronicCard(cardNumber);
+                if (animal != null) {
+                    list.add(criteriaBuilder.equal(root.get("userId").as(Integer.class), animal.getUserId()));
+                }else {
+                    list.add(criteriaBuilder.equal(root.get("userId").as(Integer.class), 0));
+                }
+            }
+
+            Predicate[] p = new Predicate[list.size()];
+            return criteriaBuilder.and(list.toArray(p));
+        }, pageable);
+
+
+        return KVResult.put(userInfoPage);
     }
 
     @Override
     public List<PetUserInfo> findAllByUserIdIn(List<Integer> paramList) {
-        return null;
+        return userInfoRepository.findAllByUserIdIn(paramList);
     }
 
     @Override
@@ -174,8 +213,6 @@ public class UserServiceImpl implements UserService {
     public PetUserInfo save(PetUserInfo userInfo) {
         return userInfoRepository.save(userInfo);
     }
-
-
 
 
 }

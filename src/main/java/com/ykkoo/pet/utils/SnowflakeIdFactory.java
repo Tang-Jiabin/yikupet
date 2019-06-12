@@ -57,6 +57,7 @@ public class SnowflakeIdFactory {
         if (datacenterId > maxDatacenterId || datacenterId < 0) {
             throw new IllegalArgumentException(String.format("datacenter Id can't be greater than %d or less than 0", maxDatacenterId));
         }
+
         this.workerId = workerId;
         this.datacenterId = datacenterId;
     }
@@ -140,6 +141,10 @@ public class SnowflakeIdFactory {
             log.error("获取workerId失败");
             return workerId;
         }
+
+
+
+
 
         return workerId;
     }

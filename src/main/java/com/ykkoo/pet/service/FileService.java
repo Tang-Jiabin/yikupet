@@ -22,7 +22,9 @@ public abstract interface FileService
   public abstract List<PetFile> findAllByFileTypeAndStateAndHospitalIdIn(FileType paramFileType, int paramInt, List<Integer> paramList);
   
   public abstract List<PetFile> findAllByFileTypeAndStateAndCompensateId(FileType paramFileType, int paramInt, Integer paramInteger);
-  
+
+  public abstract List<PetFile> findAllByFileTypeAndStateAndPromoterIdIn(FileType paramFileType, int paramInt,  List<Integer> paramInteger);
+
   public abstract List<PetFile> findAllByFileTypeAndStateAndInsuranceIdIn(FileType paramFileType, int paramInt, List<Integer> paramList);
   
   public abstract KVResult update(FileUpdateDTO paramFileUpdateDTO, Integer paramInteger);
