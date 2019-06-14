@@ -15,6 +15,7 @@ import com.ykkoo.pet.service.HospitalService;
 import com.ykkoo.pet.service.InsurancePolicyService;
 import com.ykkoo.pet.vo.*;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,8 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -106,7 +109,7 @@ public class HospitalServiceImpl implements HospitalService {
                 fileDTO.setHospitalId(hospital.getHospitalId());
                 fileDTO.setFileType(FileType.HOSPITAL_DETAILS_PIC);
             }
-            System.out.println(hospitalDetailsPic);
+
             fileService.upload(hospitalDetailsPic, adminId);
         }
 
@@ -117,15 +120,12 @@ public class HospitalServiceImpl implements HospitalService {
             hospitalInfo.setCreateDate(new Date());
         }
         BeanUtils.copyProperties(hospitalDTO, hospitalInfo);
-
+        hospitalInfo.setHospitalId(hospital.getHospitalId());
+        hospitalInfoRepository.save(hospitalInfo);
 
         return KVResult.put(HttpStatus.OK);
     }
 
-//    @Override
-//    public KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer v2) {
-//        return getHospitalPage(page,scope,type,hospitalName);
-//    }
 
     @Override
     public KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer v2) {
@@ -178,6 +178,7 @@ public class HospitalServiceImpl implements HospitalService {
 
         List<PetHospitalInfo> hospitalInfoList = hospitalInfoRepository.findAllByHospitalIdIn(hospitalIdList);
 
+
         for (PetHospital petHospital : hospitalList) {
             hospitalVO = new HospitalVO();
             BeanUtils.copyProperties(petHospital, hospitalVO);
@@ -193,13 +194,18 @@ public class HospitalServiceImpl implements HospitalService {
 
 
             petFileList = Lists.newArrayList();
+            String hospitalHeadPortrait = "";
             for (PetFile petFile : hospitalHeadPicList) {
                 if (petHospital.getHospitalId().equals(petFile.getHospitalId())) {
                     petFileList.add(petFile);
+                    if (!StringUtils.isEmpty(petFile.getFileUrl())) {
+                        hospitalHeadPortrait = petFile.getFileUrl();
+                    }
+
                 }
             }
-            hospitalVO.setHospitalHeadPortrait(petFileList);
-
+            hospitalVO.setHospitalHeadPortraitList(petFileList);
+            hospitalVO.setHospitalHeadPortrait(hospitalHeadPortrait);
 
             petFileList = Lists.newArrayList();
             for (PetFile petFile : hospitalBusinessPicList) {
@@ -279,18 +285,32 @@ public class HospitalServiceImpl implements HospitalService {
     }
 
     @Override
-    public KVResult bindingElectronicCard(Integer insurancePolicyId,Integer insuranceStatus,String electronicCard, Integer hospitalInfoId) {
-        PetInsurancePolicy insurancePolicy =  insurancePolicyService.findByInsurancePolicyId(insurancePolicyId);
+    public KVResult bindingElectronicCard(Integer insurancePolicyId, Integer insuranceStatus, String electronicCard, Integer hospitalInfoId) {
+        PetInsurancePolicy insurancePolicy = insurancePolicyService.findByInsurancePolicyId(insurancePolicyId);
 
         if (insurancePolicy == null) {
-            return KVResult.put(411,"保单不存在");
+            return KVResult.put(411, "保单不存在");
         }
 
+        PetAnimal electronicCardEx = animalRepository.findByElectronicCard(electronicCard);
+        if (electronicCardEx != null) {
+            return KVResult.put(412, "电子卡号已存在");
+        }
+
+        LocalDateTime dateTime = LocalDateTime.now();
+
+        dateTime = dateTime.plusMonths(1);
+
+        Date startDate = Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
+        dateTime = dateTime.plusYears(1);
+        Date endDate = Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
+        insurancePolicy.setInsuranceStartDate(startDate);
+        insurancePolicy.setInsuranceEndDate(endDate);
         insurancePolicy.setInsuranceStatus(insuranceStatus);
         insurancePolicyService.save(insurancePolicy);
         PetAnimal animal = animalRepository.findByAnimalId(insurancePolicy.getAnimalId());
         if (animal == null) {
-            return KVResult.put(412,"保单未绑定宠物");
+            return KVResult.put(412, "保单未绑定宠物");
         }
         animal.setElectronicCard(electronicCard);
 
@@ -306,6 +326,8 @@ public class HospitalServiceImpl implements HospitalService {
         hospitalAccount.setRatio(0);
         hospitalAccount.setState(1);
         hospitalAccount.setWithdrawalId(0);
+        hospitalAccount.setAccountType(1);
+
         hospitalAccountRepository.save(hospitalAccount);
 
 
@@ -317,27 +339,26 @@ public class HospitalServiceImpl implements HospitalService {
 
         PetInsurancePolicy insurancePolicy = insurancePolicyService.findByInsurancePolicyId(paramDiagnosticDTO.getInsurancePolicyId());
         if (insurancePolicy == null) {
-            return KVResult.put(411,"保单不存在");
+            return KVResult.put(411, "保单不存在");
         }
 
-        PetCompensateDetails compensateDetails = new PetCompensateDetails();
-        compensateDetails.setCompensateId(0);
-        compensateDetails.setInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
-        compensateDetails.setUserId(insurancePolicy.getUserId());
-        compensateDetails.setClaimStatus(1);
-        compensateDetails.setAuditStatus(1);
-        compensateDetails.setCompensateStatus(1);
-        compensateDetails.setAuditExplain("审核说明");
-        compensateDetails.setApplicationDate(new Date());
-        compensateDetails.setUpdateDate(new Date());
-        compensateDetails.setInsuranceName("保险名称");
-        compensateDetails.setInsuranceStartDate(new Date());
-        compensateDetails.setInsuranceEndDate(new Date());
-        compensateDetails.setCardNumber("卡号");
-        compensateDetails.setName("姓名");
-        compensateDetails.setAddress("地址");
-        compensateDetailsRepository.save(compensateDetails);
-
+//        PetCompensateDetails compensateDetails = new PetCompensateDetails();
+//        compensateDetails.setCompensateId(0);
+//        compensateDetails.setInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
+//        compensateDetails.setUserId(insurancePolicy.getUserId());
+//        compensateDetails.setClaimStatus(1);
+//        compensateDetails.setAuditStatus(1);
+//        compensateDetails.setCompensateStatus(1);
+//        compensateDetails.setAuditExplain("审核说明");
+//        compensateDetails.setApplicationDate(new Date());
+//        compensateDetails.setUpdateDate(new Date());
+//        compensateDetails.setInsuranceName("保险名称");
+//        compensateDetails.setInsuranceStartDate(new Date());
+//        compensateDetails.setInsuranceEndDate(new Date());
+//        compensateDetails.setCardNumber("卡号");
+//        compensateDetails.setName("姓名");
+//        compensateDetails.setAddress("地址");
+//        compensateDetailsRepository.save(compensateDetails);
 
         List<Long> insuranceDiseaseIdList = paramDiagnosticDTO.getInsuranceDiseaseIdList();
 
@@ -349,20 +370,14 @@ public class HospitalServiceImpl implements HospitalService {
                 medicalInfo.setMedicalDate(new Date());
                 medicalInfo.setInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
                 medicalInfo.setInsuranceDiseaseId(aLong);
-                medicalInfo.setMedicalAdvice("就诊说明");
+                medicalInfo.setMedicalAdvice(StringUtils.isEmpty(paramDiagnosticDTO.getMedicalAdvice()) ? "" : paramDiagnosticDTO.getMedicalAdvice());
                 medicalInfoList.add(medicalInfo);
             }
 
-            if(medicalInfoList.size()>0){
+            if (medicalInfoList.size() > 0) {
                 medicalInfoRepository.saveAll(medicalInfoList);
             }
         }
-
-
-
-
-
-
 
         return KVResult.put(HttpStatus.OK);
     }
@@ -380,6 +395,21 @@ public class HospitalServiceImpl implements HospitalService {
             promoter = new PetPromoter();
             promoter.setCreateDate(new Date());
         }
+
+
+        if (StringUtils.isEmpty(promoterDTO.getInvitationCode())) {
+            return KVResult.put(411, "推广码不能为空");
+        }
+
+        PetPromoter invitationCode = promoterRepository.findByInvitationCode(promoterDTO.getInvitationCode());
+
+        if (invitationCode != null) {
+            if (!promoter.getInvitationCode().equals(invitationCode.getInvitationCode())) {
+                return KVResult.put(412, "推广码已存在");
+            }
+
+        }
+
         BeanUtils.copyProperties(promoterDTO, promoter);
         promoter = promoterRepository.save(promoter);
 
@@ -406,7 +436,7 @@ public class HospitalServiceImpl implements HospitalService {
         }
         fileUploadDTO.setFileDTOList(saveFileList);
 
-        System.out.println(fileUploadDTO);
+
         fileService.upload(fileUploadDTO, adminId);
 
 
@@ -476,16 +506,19 @@ public class HospitalServiceImpl implements HospitalService {
     }
 
     @Override
-    public KVResult getInsurancePolicyDetails(String phone,String cardNum, Integer hospitalInfoId) {
+    public KVResult getInsurancePolicyDetails(String phone, String cardNum, Integer hospitalInfoId) {
 
-        if(StringUtils.isEmpty(phone) && StringUtils.isEmpty(cardNum)){
-            return KVResult.put(411,"用户不存在");
+        if (StringUtils.isEmpty(phone) && StringUtils.isEmpty(cardNum)) {
+            return KVResult.put(411, "用户不存在");
         }
         PetUserInfo userInfo;
-        if(!StringUtils.isEmpty(phone)){
+        if (!StringUtils.isEmpty(phone)) {
             userInfo = userInfoRepository.findByPhone(phone);
-        }else {
+        } else {
             PetAnimal animal = animalRepository.findByElectronicCard(cardNum);
+            if (animal == null) {
+                return KVResult.put(412, "电子卡号不存在");
+            }
             userInfo = userInfoRepository.findByUserId(animal.getUserId());
         }
 
@@ -493,7 +526,7 @@ public class HospitalServiceImpl implements HospitalService {
             return KVResult.put(411, "用户不存在");
         }
         UserVO userVO = new UserVO();
-        BeanUtils.copyProperties(userInfo,userVO);
+        BeanUtils.copyProperties(userInfo, userVO);
 
         List<PetInsurancePolicy> insurancePolicyList = insurancePolicyService.findByUserIdAndInsuranceStatus(userInfo.getUserId(), 2);
         insurancePolicyList.addAll(insurancePolicyService.findByUserIdAndInsuranceStatus(userInfo.getUserId(), 3));
@@ -505,8 +538,8 @@ public class HospitalServiceImpl implements HospitalService {
         List<InsurancePolicyVO> insurancePolicyVOList = new ArrayList<>();
         for (PetInsurancePolicy insurancePolicy : insurancePolicyList) {
 
-             insurancePolicyVO = new InsurancePolicyVO();
-             BeanUtils.copyProperties(insurancePolicy,insurancePolicyVO);
+            insurancePolicyVO = new InsurancePolicyVO();
+            BeanUtils.copyProperties(insurancePolicy, insurancePolicyVO);
 
             //保单疾病
             List<PetInsuranceDisease> insuranceDiseaseList = insuranceDiseaseRepository.findAllByInsurancePolicyId(insurancePolicy.getInsurancePolicyId());
@@ -522,13 +555,13 @@ public class HospitalServiceImpl implements HospitalService {
             //保险详情
             PetInsurance insurance = insuranceRepository.findByInsuranceId(insurancePolicy.getInsuranceId());
             InsuranceVO insuranceVO = new InsuranceVO();
-            BeanUtils.copyProperties(insurance,insuranceVO);
+            BeanUtils.copyProperties(insurance, insuranceVO);
             insurancePolicyVO.setInsuranceVO(insuranceVO);
 
             //宠物信息
             PetAnimal animal = animalRepository.findByAnimalId(insurancePolicy.getAnimalId());
             PetAnimalVO animalVO = new PetAnimalVO();
-            BeanUtils.copyProperties(animal,animalVO);
+            BeanUtils.copyProperties(animal, animalVO);
             insurancePolicyVO.setAnimalVO(animalVO);
 
             //疾病分类
@@ -541,7 +574,7 @@ public class HospitalServiceImpl implements HospitalService {
             List<PetMedicalInfoVO> medicalInfoVOList = new ArrayList<>();
             for (PetMedicalInfo medicalInfo : medicalInfoList) {
                 medicalInfoVO = new PetMedicalInfoVO();
-                BeanUtils.copyProperties(medicalInfo,medicalInfoVO);
+                BeanUtils.copyProperties(medicalInfo, medicalInfoVO);
                 medicalInfoVOList.add(medicalInfoVO);
             }
             insurancePolicyVO.setMedicalInfoList(medicalInfoVOList);

@@ -23,31 +23,33 @@ public class PetPromoter {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer promoterId;
 
-    private  String promotionUnit;
+    private String promotionUnit;
 
-    private  String promotionName;
+    private String promotionName;
 
-    private  String contactNumber;
 
-    private  String  invitationCode;
 
-    private  String bankCardNumber;
+    private String contactNumber;
 
-    private  String openBank;
+    private String invitationCode;
 
-    private  String promotionArea;
+    private String bankCardNumber;
 
-    private  String returnRatio;
+    private String openBank;
 
-    private  String accountNumber;
+    private String promotionArea;
 
-    private  String  password;
+    private Integer returnRatio;
 
-    private  Integer  state;
+    private String accountNumber;
 
-    private  String salesmanName;
+    private String password;
 
-    private  String salesmanTelephone;
+    private Integer state;
+
+    private String salesmanName;
+
+    private String salesmanTelephone;
 
     private String token;
 

@@ -44,6 +44,10 @@ public class UserMerchantServiceImpl implements UserMerchantService {
         }
         PetHospital hospital = this.hospitalRepository.findByHospitalId(hospitalInfo.getHospitalId());
 
+        if (hospital.getCooperationState()!=1) {
+            return KVResult.put(412,"尚未通过审核");
+        }
+
         TokenModel userToken = this.tokenManage.createHospitalToken(hospitalInfo);
         UserVO userVO = new UserVO();
         userVO.setNickName(hospital.getHospitalName());

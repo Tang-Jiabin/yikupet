@@ -15,7 +15,7 @@ public abstract interface InsurancePolicyService
   
   public abstract List<PetInsurancePolicy> findByUserId(Integer paramInteger);
   
-  public abstract KVResult getInsurancePolicyPage(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, Integer paramInteger4, Integer paramInteger5, Integer paramInteger6);
+  public abstract KVResult getInsurancePolicyPage(Integer page, Integer insuranceStatus, Integer insuranceType, Integer claimStatus, Integer animalId, Integer userId);
   
   public abstract KVResult<InsurancePolicyVO> getInsurancePolicyDetails(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3);
   
@@ -23,7 +23,7 @@ public abstract interface InsurancePolicyService
   
   public abstract List<PetInsurancePolicy> findByUserIdAndInsuranceStatus(Integer paramInteger, int paramInt);
   
-  public abstract KVResult applyClaims(Integer paramInteger1, Integer paramInteger2);
+  public abstract KVResult applyClaims(Integer paramInteger1,List<Long> insuranceDiseaseIdList, Integer paramInteger2);
   
   public abstract KVResult uploadClaimsVoucher(ClaimsVoucherDTO paramClaimsVoucherDTO, Integer paramInteger);
   

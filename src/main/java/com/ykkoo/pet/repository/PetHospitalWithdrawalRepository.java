@@ -15,6 +15,10 @@ public abstract interface PetHospitalWithdrawalRepository
   public abstract List<PetHospitalWithdrawal> findAllByHospitalIdAndState(Integer paramInteger1, Integer paramInteger2);
   
   public abstract PetHospitalWithdrawal findByWithdrawalId(Integer paramInteger);
+
+    List<PetHospitalWithdrawal> findAllByPromoterId(Integer promoterId);
+
+  List<PetHospitalWithdrawal> findAllByPromoterIdAndState(Integer promoterId, Integer state);
 }
 
 

@@ -4,6 +4,7 @@ package com.ykkoo.pet.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ykkoo.pet.pojo.PetDisease;
+import com.ykkoo.pet.pojo.PetDiseaseTypes;
 import lombok.Data;
 
 import java.util.Date;
@@ -28,6 +29,7 @@ public class InsuranceVO {
     private String diseaseProtection;
     private String claimExplanation;
     private List<PetDisease> disease;
+    private List<PetDiseaseTypes> diseaseTypes;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createDate;

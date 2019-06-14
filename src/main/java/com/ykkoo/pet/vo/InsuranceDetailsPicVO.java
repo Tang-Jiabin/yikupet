@@ -6,6 +6,8 @@ import lombok.Data;
 
 @Data
 public class InsuranceDetailsPicVO {
+    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING)
+    private Long fileId;
     private String fileUrl;
     private String jumpLink;
     private FileType fileType;

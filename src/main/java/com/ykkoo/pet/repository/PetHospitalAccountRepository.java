@@ -1,23 +1,27 @@
 package com.ykkoo.pet.repository;
 
 import com.ykkoo.pet.pojo.PetHospitalAccount;
+
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public abstract interface PetHospitalAccountRepository
-  extends JpaRepository<PetHospitalAccount, Integer>
-{
-  public abstract List<PetHospitalAccount> findAllByHospitalIdAndState(Integer paramInteger1, Integer paramInteger2);
-  
-  public abstract List<PetHospitalAccount> findAllByAccountIdIn(List<Integer> paramList);
-  
-  public abstract List<PetHospitalAccount> findAllByAccountIdInAndState(List<Integer> paramList, int paramInt);
-  
-  public abstract List<PetHospitalAccount> findAllByWithdrawalIdAndState(Integer paramInteger, int paramInt);
-  
-  public abstract List<PetHospitalAccount> findAllByHospitalId(Integer paramInteger);
+public interface PetHospitalAccountRepository extends JpaRepository<PetHospitalAccount, Integer> {
+    List<PetHospitalAccount> findAllByHospitalIdAndState(Integer paramInteger1, Integer paramInteger2);
+
+    List<PetHospitalAccount> findAllByAccountIdIn(List<Integer> paramList);
+
+    List<PetHospitalAccount> findAllByAccountIdInAndState(List<Integer> paramList, int paramInt);
+
+    List<PetHospitalAccount> findAllByWithdrawalIdAndState(Integer paramInteger, int paramInt);
+
+    List<PetHospitalAccount> findAllByHospitalId(Integer paramInteger);
+
+    List<PetHospitalAccount> findAllByPromoterId(Integer promoterId);
+
+    List<PetHospitalAccount> findAllByPromoterIdAndState(Integer promoterId, Integer state);
 }
 
 

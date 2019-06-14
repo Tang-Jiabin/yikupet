@@ -19,7 +19,6 @@ public class HospitalDTO {
     private FileUploadDTO hospitalDetailsPic;
     private String scopeProtection;
     private FileUploadDTO businessLicense;
-    private Integer rebateRatio;
     private String hospitalAccount;
     private String hospitalPassword;
     private String contacts;

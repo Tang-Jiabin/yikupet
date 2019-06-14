@@ -16,6 +16,7 @@ import com.ykkoo.pet.dto.InsurancePolicyDTO;
 import com.ykkoo.pet.pojo.*;
 import com.ykkoo.pet.repository.*;
 import com.ykkoo.pet.service.*;
+import com.ykkoo.pet.utils.DoubleUtil;
 import com.ykkoo.pet.utils.RandomUtil;
 import com.ykkoo.pet.utils.wechat.pay.TenPay;
 import com.ykkoo.pet.vo.*;
@@ -57,6 +58,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     private FileService fileService;
     private PetWechatUserInfoRepository wechatUserInfoRepository;
     private PetDiseaseTypesRepository diseaseTypesRepository;
+    private PetPromoterRepository promoterRepository;
 
 
     @Override
@@ -84,11 +86,23 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         PetAnimal animal = createAnimal(insurancePolicyDTO, userId, insurance);
 
         //创建保单
-        PetInsurancePolicy insurancePolicy = createInsurancePolicy(userId, insurance, animal);
+        PetInsurancePolicy insurancePolicy = createInsurancePolicy(userId, insurance, animal, insurancePolicyDTO.getAddress());
+
+        //邀请码
+        int promoterId = 0;
+        if (!StringUtils.isEmpty(insurancePolicyDTO.getInvitationCode())) {
+            PetPromoter promoter = promoterRepository.findByInvitationCode(insurancePolicyDTO.getInvitationCode());
+            if (promoter != null) {
+                promoterId = promoter.getPromoterId();
+            }
+
+        }
+
 
         Map<String, Integer> info = Maps.newHashMap();
         info.put("an", animal.getAnimalId());
         info.put("ip", insurancePolicy.getInsurancePolicyId());
+        info.put("pi", promoterId);
         String attach = new Gson().toJson(info);
         String outTradeNo = getLogisticsOrderNo();
 
@@ -98,21 +112,26 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         return KVResult.put(HttpStatus.OK, pay);
     }
 
-    private PetInsurancePolicy createInsurancePolicy(Integer userId, PetInsurance insurance, PetAnimal animal) {
+    private PetInsurancePolicy createInsurancePolicy(Integer userId, PetInsurance insurance, PetAnimal animal, String address) {
         PetInsurancePolicy insurancePolicy = new PetInsurancePolicy();
         insurancePolicy.setUserId(userId);
         insurancePolicy.setAnimalId(animal.getAnimalId());
         insurancePolicy.setInsuranceId(insurance.getInsuranceId());
-        insurancePolicy.setInsuranceStatus(2);
+        insurancePolicy.setInsuranceStatus(7);
         insurancePolicy.setClaimStatus(1);
         insurancePolicy.setAuditStatus(1);
         insurancePolicy.setAuditExplain("未审核");
         insurancePolicy.setClaimNumber(0);
         insurancePolicy.setCreateDate(new Date());
-        insurancePolicy.setInsuranceStartDate(new Date());
-        insurancePolicy.setInsuranceEndDate(new Date());
+        insurancePolicy.setInsuranceStartDate(null);
+        insurancePolicy.setInsuranceEndDate(null);
         insurancePolicy.setInsuranceUpdateDate(new Date());
         insurancePolicy.setPolicyDocuments("");
+        insurancePolicy.setAddress("");
+        if (!StringUtils.isEmpty(address)) {
+            insurancePolicy.setAddress(address);
+        }
+        insurancePolicy.setGuaranteeAmount(insurance.getGuaranteeAmount());
         insurancePolicy = insurancePolicyRepository.save(insurancePolicy);
         return insurancePolicy;
     }
@@ -182,6 +201,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
             return criteriaBuilder.and(list.toArray(p));
         }, pageable);
 
+
         //创建视图类
         List<PetInsurancePolicy> insurancePolicyList = insurancePolicyPage.getContent();
         List<InsurancePolicyVO> insurancePolicyVOList = Lists.newArrayList();
@@ -201,6 +221,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         List<PetInsurance> insuranceList = insuranceService.findAllByInsuranceIdIn(insuranceIdList);
         List<PetAnimal> animalList = animalService.findAllByAnimalIdIn(animalIdList);
 
+        List<PetDiseaseTypes> diseaseTypes = diseaseTypesRepository.findAll();
         //组合数据
         for (PetInsurancePolicy insurancePolicy : insurancePolicyList) {
             insurancePolicyVO = new InsurancePolicyVO();
@@ -238,6 +259,8 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
 
             KVResult<UserVO> userInfo = userService.getUserInfo(insurancePolicy.getUserId());
             insurancePolicyVO.setUserVO(userInfo.getVal());
+
+            insurancePolicyVO.setTypes(diseaseTypes);
 
             insurancePolicyVOList.add(insurancePolicyVO);
         }
@@ -318,22 +341,39 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult applyClaims(Integer insurancePolicyId, Integer userId) {
+    public KVResult applyClaims(Integer insurancePolicyId, List<Long> insuranceDiseaseIdList, Integer userId) {
         PetInsurancePolicy insurancePolicy = insurancePolicyRepository.findByInsurancePolicyId(insurancePolicyId);
         if (insurancePolicy.getClaimStatus() != 1 && insurancePolicy.getClaimStatus() != 5) {
             return KVResult.put(411, "当前保单您已申请过理赔或理赔尚未完成");
         }
+
         insurancePolicy.setClaimStatus(2);
         insurancePolicy.setAuditStatus(1);
         insurancePolicy.setAuditExplain("未审核");
         insurancePolicy.setInsuranceUpdateDate(new Date());
-        insurancePolicyRepository.save(insurancePolicy);
+
+
+        List<PetInsuranceDisease> insuranceDiseaseList = insuranceDiseaseRepository.findAllByInsuranceDiseaseIdIn(insuranceDiseaseIdList);
+        Double guaranteeAmount = insurancePolicy.getGuaranteeAmount();
+        Double amount = 0D;
+        for (PetInsuranceDisease insuranceDisease : insuranceDiseaseList) {
+            if (insuranceDisease.getClaimAmount() != null) {
+                amount = DoubleUtil.sum(amount,insuranceDisease.getClaimAmount());
+            }
+        }
+
+        amount = DoubleUtil.sub(guaranteeAmount,amount);
+        if (amount <= 0) {
+            amount = 0D;
+        }
+        insurancePolicy.setGuaranteeAmount(amount);
+
+        insurancePolicy = insurancePolicyRepository.save(insurancePolicy);
 
         PetInsurance insurance = insuranceService.findByInsuranceId(insurancePolicy.getInsuranceId());
 
         PetCompensateDetails compensateDetails = new PetCompensateDetails();
         compensateDetails.setInsurancePolicyId(insurancePolicyId);
-        compensateDetails.setCompensateStatus(1);
         compensateDetails.setUserId(userId);
         compensateDetails.setAuditStatus(1);
         compensateDetails.setClaimStatus(1);

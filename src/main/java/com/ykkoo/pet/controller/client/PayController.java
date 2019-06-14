@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+
 
 @ApiIgnore
 @Api(value = "支付", description = "/pay")
@@ -27,9 +29,10 @@ public class PayController {
 
     @ApiIgnore
     @ApiOperation("微信回调通知")
-    @RequestMapping(value = {"tenCallback"}, produces = {"text/plain"}, method = {org.springframework.web.bind.annotation.RequestMethod.POST})
+    @RequestMapping(value = "tenCallback", method = POST)
     public String tenCallback(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        System.out.println("回调通知");
         /* 38 */
         return this.payService.tenPayCallback(request, response);
     }

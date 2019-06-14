@@ -16,4 +16,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PetPromoterRepository extends JpaRepository<PetPromoter,Integer>, JpaSpecificationExecutor<PetPromoter> {
     PetPromoter findByPromoterId(Integer promoterId);
+
+    PetPromoter findByInvitationCode(String invitationCode);
+
+    PetPromoter findByAccountNumberAndPassword(String name, String password);
 }

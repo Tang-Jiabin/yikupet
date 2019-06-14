@@ -4,6 +4,7 @@ import com.ykkoo.pet.common.annotation.HospitalAuthorization;
 import com.ykkoo.pet.common.interceptor.AdminAuthorizationInterceptor;
 import com.ykkoo.pet.common.interceptor.AuthorizationInterceptor;
 import com.ykkoo.pet.common.interceptor.HospitalAuthorizationInterceptor;
+import com.ykkoo.pet.common.interceptor.PromoterAuthorizationInterceptor;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -22,6 +23,8 @@ public class WebRootConfigurer extends WebMvcConfigurerAdapter {
 
     private HospitalAuthorizationInterceptor hospitalAuthorizationInterceptor;
 
+    private PromoterAuthorizationInterceptor promoterAuthorizationInterceptor;
+
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -31,6 +34,7 @@ public class WebRootConfigurer extends WebMvcConfigurerAdapter {
         registry.addInterceptor(authorizationInterceptor).addPathPatterns("/**");
         registry.addInterceptor(adminAuthorizationInterceptor).addPathPatterns("/manage/**");
         registry.addInterceptor(hospitalAuthorizationInterceptor).addPathPatterns("/merchant/**");
+        registry.addInterceptor(promoterAuthorizationInterceptor).addPathPatterns("/promoter/**");
         super.addInterceptors(registry);
     }
 

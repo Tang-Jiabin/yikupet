@@ -208,7 +208,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public List<PetFile> findAllByFileTypeAndStateAndInsuranceIdIn(FileType paramFileType, int paramInt, List<Integer> paramList) {
-        return null;
+        return petFileRepository.findAllByFileTypeAndStateAndInsuranceIdIn(paramFileType,paramInt,paramList);
     }
 
     @Override

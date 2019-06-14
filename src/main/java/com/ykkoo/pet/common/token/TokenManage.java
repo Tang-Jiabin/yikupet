@@ -1,32 +1,32 @@
 package com.ykkoo.pet.common.token;
 
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.ykkoo.pet.pojo.PetHospitalInfo;
-import java.io.UnsupportedEncodingException;
 
-public abstract interface TokenManage
-{
-  public abstract TokenModel createAdminToken(Integer paramInteger);
-  
-  public abstract boolean checkAdminToken(String paramString)
-    throws UnsupportedEncodingException, JWTVerificationException;
-  
-  public abstract TokenModel getAdminToken(String paramString)
-    throws UnsupportedEncodingException, JWTVerificationException;
-  
-  public abstract TokenModel createUserToken(Integer paramInteger);
-  
-  public abstract boolean checkUserToken(String paramString);
-  
-  public abstract TokenModel getUserToken(String paramString)
-    throws UnsupportedEncodingException;
-  
-  public abstract TokenModel createHospitalToken(PetHospitalInfo paramPetHospitalInfo);
-  
-  public abstract boolean checkHospitalToken(String paramString);
-  
-  public abstract TokenModel getHospitalToken(String paramString)
-    throws UnsupportedEncodingException;
+
+public  interface TokenManage {
+    TokenModel createAdminToken(Integer paramInteger);
+
+    boolean checkAdminToken(String paramString);
+
+    TokenModel getAdminToken(String paramString) ;
+
+    TokenModel createUserToken(Integer paramInteger);
+
+    boolean checkUserToken(String paramString);
+
+    TokenModel getUserToken(String paramString) ;
+
+    TokenModel createHospitalToken(PetHospitalInfo paramPetHospitalInfo);
+
+    boolean checkHospitalToken(String paramString);
+
+    TokenModel getHospitalToken(String paramString) ;
+
+    TokenModel createPromoterToken(Integer promoterId);
+
+    boolean checkPromoterToken(String token);
+
+    TokenModel getPromoterToken(String token);
 }
 
 

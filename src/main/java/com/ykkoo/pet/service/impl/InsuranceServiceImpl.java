@@ -122,46 +122,67 @@ public class InsuranceServiceImpl implements InsuranceService {
     @Override
     public KVResult addInsurance(InsuranceDTO insuranceDTO, Integer adminId) {
 
-        PetInsurance petInsurance = new PetInsurance();
+        PetInsurance petInsurance;
+        if (insuranceDTO.getInsuranceId() != null && insuranceDTO.getInsuranceId() != 0) {
+            petInsurance = insuranceRepository.findByInsuranceId(insuranceDTO.getInsuranceId());
+            if (petInsurance == null) {
+                return KVResult.put(411,"保险不存在");
+            }
+        }else {
+            petInsurance =  new PetInsurance();
+            petInsurance.setCreateDate(new Date());
+        }
+        petInsurance.setUpdateDate(new Date());
+
         BeanUtils.copyProperties(insuranceDTO, petInsurance);
 
         petInsurance = insuranceRepository.save(petInsurance);
 
         FileDTO securityCardPic = insuranceDTO.getSecurityCardPic();
-        securityCardPic.setInsuranceId(petInsurance.getInsuranceId());
-        securityCardPic.setFileType(FileType.SECURITY_CARD);
+        if (securityCardPic != null) {
+            securityCardPic.setInsuranceId(petInsurance.getInsuranceId());
+            securityCardPic.setFileType(FileType.SECURITY_CARD);
 
-        PetFile petFile = fileService.upload(securityCardPic, adminId);
-        if (petFile != null) {
-            petInsurance.setSecurityCardPic(petFile.getFileUrl());
+            PetFile petFile = fileService.upload(securityCardPic, adminId);
+            if (petFile != null) {
+                petInsurance.setSecurityCardPic(petFile.getFileUrl());
+            }
         }
 
-        List<FileDTO> fileDTOList = insuranceDTO.getInsuranceDetailsPic().getFileDTOList();
-        for (FileDTO fileDTO : fileDTOList) {
-            fileDTO.setFileType(FileType.INSURANCE_DETAILS);
-            fileDTO.setInsuranceId(petInsurance.getInsuranceId());
-        }
-        FileUploadDTO fileUploadDTO = new FileUploadDTO();
-        fileUploadDTO.setFileDTOList(fileDTOList);
+        FileUploadDTO insuranceDetailsPic = insuranceDTO.getInsuranceDetailsPic();
+        if (insuranceDetailsPic != null) {
+            List<FileDTO> fileDTOList = insuranceDetailsPic.getFileDTOList();
+            if (fileDTOList != null) {
+                for (FileDTO fileDTO : fileDTOList) {
+                    fileDTO.setFileType(FileType.INSURANCE_DETAILS);
+                    fileDTO.setInsuranceId(petInsurance.getInsuranceId());
+                }
+                FileUploadDTO fileUploadDTO = new FileUploadDTO();
+                fileUploadDTO.setFileDTOList(fileDTOList);
 
-        KVResult upload = fileService.upload(fileUploadDTO, adminId);
+                KVResult upload = fileService.upload(fileUploadDTO, adminId);
+            }
+        }
 
         petInsurance = insuranceRepository.save(petInsurance);
 
 
         PetDisease petDisease;
         List<PetDisease> diseaseList = Lists.newArrayList();
-
-        for (DiseaseDTO diseaseDTO : insuranceDTO.getDisease()) {
-            petDisease = new PetDisease();
-            BeanUtils.copyProperties(diseaseDTO, petDisease);
-            petDisease.setInsuranceId(petInsurance.getInsuranceId());
-            if (petDisease.getTypeId() == null) {
-                petDisease.setTypeId(0);
+        List<DiseaseDTO> disease = insuranceDTO.getDisease();
+        if (disease != null) {
+            for (DiseaseDTO diseaseDTO : disease) {
+                petDisease = new PetDisease();
+                BeanUtils.copyProperties(diseaseDTO, petDisease);
+                petDisease.setInsuranceId(petInsurance.getInsuranceId());
+                if (petDisease.getTypeId() == null) {
+                    petDisease.setTypeId(0);
+                }
+                diseaseList.add(petDisease);
             }
-            diseaseList.add(petDisease);
+            diseaseRepository.saveAll(diseaseList);
         }
-        diseaseRepository.saveAll(diseaseList);
+
 
         return KVResult.put(HttpStatus.OK);
     }
@@ -178,6 +199,7 @@ public class InsuranceServiceImpl implements InsuranceService {
 
     @Override
     public KVResult getInsurancePage(Integer page, Integer size, String insuranceName, Integer insuranceType, Integer insuranceState, Integer adminId) {
+
 
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "insuranceId");
         Page<PetInsurance> insurancePage = insuranceRepository.findAll((root, query, criteriaBuilder) -> {
@@ -200,11 +222,21 @@ public class InsuranceServiceImpl implements InsuranceService {
             return criteriaBuilder.and(list.toArray(p));
         }, pageable);
 
+
         InsuranceVO insuranceVO;
         List<InsuranceVO> insuranceVOList = Lists.newArrayList();
         PageVo<InsuranceVO> insuranceVOPageVo = new PageVo<>();
 
         List<PetInsurance> content = insurancePage.getContent();
+
+        List<Integer> insuranceIdList = new ArrayList<>();
+        for (PetInsurance insurance : content) {
+            insuranceIdList.add(insurance.getInsuranceId());
+        }
+
+        List<PetDisease> diseaseList = diseaseRepository.findAllByDiseaseStateAndInsuranceIdIn(1, insuranceIdList);
+        List<PetDiseaseTypes> diseaseTypes = diseaseTypesRepository.findAll();
+        List<PetFile> petFileList = fileService.findAllByFileTypeAndStateAndInsuranceIdIn(FileType.INSURANCE_DETAILS, 1, insuranceIdList);
 
         BeanUtils.copyProperties(insurancePage, insuranceVOPageVo);
 
@@ -212,8 +244,29 @@ public class InsuranceServiceImpl implements InsuranceService {
             insuranceVO = new InsuranceVO();
             BeanUtils.copyProperties(insurance, insuranceVO);
 
+            List<PetDisease> petDiseaseList = new ArrayList<>();
+            for (PetDisease petDisease : diseaseList) {
+                if (petDisease.getInsuranceId().equals(insurance.getInsuranceId())) {
+                    petDiseaseList.add(petDisease);
+                }
+            }
+            insuranceVO.setDisease(petDiseaseList);
+            insuranceVO.setDiseaseTypes(diseaseTypes);
+
+            List<InsuranceDetailsPicVO> insuranceDetailsPicVOS = new ArrayList<>();
+
+            for (PetFile petFile : petFileList) {
+                if(insurance.getInsuranceId().equals(petFile.getInsuranceId())){
+                    InsuranceDetailsPicVO insuranceDetailsPicVO = new InsuranceDetailsPicVO();
+                    BeanUtils.copyProperties(petFile,insuranceDetailsPicVO);
+                    insuranceDetailsPicVOS.add(insuranceDetailsPicVO);
+                }
+            }
+            insuranceVO.setInsuranceDetailsPicList(insuranceDetailsPicVOS);
+
             insuranceVOList.add(insuranceVO);
         }
+        insuranceVOPageVo.setContent(insuranceVOList);
 
         return KVResult.put(insuranceVOPageVo);
     }

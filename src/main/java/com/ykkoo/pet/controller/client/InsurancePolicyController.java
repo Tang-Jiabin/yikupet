@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.util.List;
+
 @io.swagger.annotations.Api(value = "保单", description = "insurancePolicy")
 @org.springframework.web.bind.annotation.RestController
 @RequestMapping({"/insurancePolicy"})
@@ -80,9 +82,9 @@ public class InsurancePolicyController {
     @Authorization
     @ApiOperation("申请理赔")
     @RequestMapping(value = {"applyClaims"}, method = {org.springframework.web.bind.annotation.RequestMethod.GET})
-    public ServerResponse applyClaims(@RequestParam Integer insurancePolicyId, @ApiIgnore @RequestAttribute Integer userId) {
+    public ServerResponse applyClaims(@RequestParam Integer insurancePolicyId, @RequestParam List<Long> insuranceDiseaseIdList, @ApiIgnore @RequestAttribute Integer userId) {
         /*  77 */
-        KVResult result = this.insurancePolicyService.applyClaims(insurancePolicyId, userId);
+        KVResult result = this.insurancePolicyService.applyClaims(insurancePolicyId,insuranceDiseaseIdList, userId);
         /*  78 */
         return ServerResponse.createMessage(result);
     }

@@ -22,7 +22,8 @@ public class HospitalVO {
     private Integer cooperationState;
 
 
-    private List<PetFile> hospitalHeadPortrait;
+    private List<PetFile> hospitalHeadPortraitList;
+    private String hospitalHeadPortrait;
     private String hospitalIntroduction;
 
 

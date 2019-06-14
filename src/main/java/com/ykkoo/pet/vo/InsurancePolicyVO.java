@@ -29,6 +29,7 @@ public class InsurancePolicyVO {
     private InsuranceVO insuranceVO;
     private PetAnimalVO animalVO;
     private List<PetDiseaseTypes> types;
+    private Double guaranteeAmount;
 
     private UserVO userVO;
     private java.util.List<InsuranceDiseaseVO> insuranceDiseaseVOList;

@@ -30,6 +30,8 @@ public class PetInsurancePolicy {
     private Date insuranceEndDate;
     private Date insuranceUpdateDate;
     private String policyDocuments;
+    private String address;
+    private Double guaranteeAmount;
 
 }
 

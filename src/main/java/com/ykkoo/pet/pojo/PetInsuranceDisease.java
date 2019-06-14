@@ -22,6 +22,7 @@ public class PetInsuranceDisease {
     private String claimExplanation;
     @Column(name="type_Id" ,nullable=false,columnDefinition="INT default 0")
     private Integer typeId;
+    private Double claimAmount;
 
 
 }

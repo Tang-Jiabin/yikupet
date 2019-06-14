@@ -7,11 +7,11 @@ public abstract interface AccountMerchantService
 {
   public abstract KVResult getAccountInfo(Integer paramInteger1, Integer paramInteger2);
   
-  public abstract KVResult cashWithdrawal(Double paramDouble, String paramString1, String paramString2, String paramString3, List<Integer> paramList, Integer paramInteger);
+  public abstract KVResult cashWithdrawal(Double amount, String cardNumber, String cardBank,String name, List<Integer> accountIdList, Integer hospitalInfoId);
   
   public abstract KVResult getWithdrawalInfo(Integer paramInteger1, Integer paramInteger2);
   
-  public abstract KVResult getWithdrawalPage(Integer paramInteger1, Integer paramInteger2, String paramString, Integer paramInteger3, Integer paramInteger4);
+  public abstract KVResult getWithdrawalPage(Integer page, Integer size,String  name, Integer type ,Integer state,Integer adminId);
   
   public abstract KVResult updateWithdrawal(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3);
 }

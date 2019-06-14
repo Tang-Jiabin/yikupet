@@ -8,12 +8,13 @@ import com.ykkoo.pet.service.InsuranceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 @Api(value = "Z管理【保险】", description = "insurance")
 @RestController
-@org.springframework.web.bind.annotation.RequestMapping({"/manage/insurance"})
+@RequestMapping({"/manage/insurance"})
 @AdminAuthorization
 public class InsuranceManageController {
     private InsuranceService insuranceService;
@@ -23,11 +24,19 @@ public class InsuranceManageController {
         this.insuranceService = insuranceService;
     }
 
+    //这个类初始化的时候会首先调用init方法
+    @InitBinder  //类初始化是调用的方法注解
+    public void initBinder(WebDataBinder binder) {
+        //给这个controller配置接收list的长度100000，仅在这个controller有效
+        binder.setAutoGrowCollectionLimit(1024);
+    }
+
+
 
     @AdminAuthorization
     @ApiOperation("添加保险")
     @PostMapping({"/addInsurance"})
-    public ServerResponse addInsurance(InsuranceDTO insuranceDTO, @ApiIgnore @RequestAttribute Integer adminId) {
+    public ServerResponse addInsurance( InsuranceDTO insuranceDTO, @ApiIgnore @RequestAttribute Integer adminId) {
         /* 37 */
         KVResult result = this.insuranceService.addInsurance(insuranceDTO, adminId);
         /* 38 */
@@ -68,17 +77,19 @@ public class InsuranceManageController {
 
     @AdminAuthorization
     @ApiOperation("保险分页")
-    @org.springframework.web.bind.annotation.GetMapping({"/getInsurancePage"})
+    @GetMapping({"/getInsurancePage"})
     public ServerResponse getInsurancePage(@ApiParam("页码") @RequestParam(required = false, defaultValue = "0") Integer page,
                                            @ApiParam("条数") @RequestParam(required = false, defaultValue = "10") Integer size,
                                            @ApiParam("保险名称") @RequestParam(required = false, defaultValue = "") String insuranceName,
                                            @ApiParam("保险类型 0-全部 1-汪保 2-喵保") @RequestParam(required = false, defaultValue = "0") Integer insuranceType,
                                            @ApiParam("保险状态 0-全部 1-上架 2-下架") @RequestParam(required = false, defaultValue = "0") Integer insuranceState,
                                            @ApiIgnore @RequestAttribute Integer adminId) {
-        /* 51 */
-        KVResult result = this.insuranceService.getInsurancePage(page, size, insuranceName, insuranceType, insuranceState, adminId);
-        /* 52 */
-        return ServerResponse.createMessage(result.getKey().intValue(), result.getVal());
+
+
+
+        KVResult result = insuranceService.getInsurancePage(page, size, insuranceName, insuranceType, insuranceState, adminId);
+
+        return ServerResponse.createMessage(result);
     }
 }
 

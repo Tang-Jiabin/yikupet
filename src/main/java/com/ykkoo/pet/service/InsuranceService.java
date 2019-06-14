@@ -7,9 +7,9 @@ import java.util.List;
 
 public abstract interface InsuranceService
 {
-  public abstract KVResult findInsuranceByType(Integer paramInteger);
+  KVResult findInsuranceByType(Integer paramInteger);
   
-  public abstract KVResult addInsurance(InsuranceDTO paramInsuranceDTO, Integer paramInteger);
+  KVResult addInsurance(InsuranceDTO paramInsuranceDTO, Integer paramInteger);
   
   public abstract PetInsurance findByInsuranceId(Integer paramInteger);
   

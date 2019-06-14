@@ -40,7 +40,7 @@ public class ReservationMerchantController {
     @GetMapping({"/bindingElectronicCard"})
     public ServerResponse bindingElectronicCard(@ApiParam("保单ID") @RequestParam(required = false, defaultValue = "0") Integer insurancePolicyId, @ApiParam("审核状态 2-审核通过 5-审核未通过") @RequestParam(required = false, defaultValue = "2") Integer insuranceStatus, @ApiParam("电子卡号") @RequestParam(required = false, defaultValue = "") String electronicCard, @ApiIgnore @RequestAttribute Integer hospitalInfoId) {
         KVResult result = this.hospitalService.bindingElectronicCard(insurancePolicyId, insuranceStatus, electronicCard, hospitalInfoId);
-        return ServerResponse.createMessage(result.getKey().intValue(), result.getVal());
+        return ServerResponse.createMessage(result);
     }
 
     @HospitalAuthorization

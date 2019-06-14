@@ -20,6 +20,7 @@ public class PetDisease {
     private Integer claimNumber;
     private Integer specificNumber;
     private String claimExplanation;
+    private Double claimAmount;
 
 
 }

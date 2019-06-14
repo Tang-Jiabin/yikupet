@@ -15,7 +15,7 @@ public class InsuranceDTO {
     private FileDTO securityCardPic;
     private Integer insurancePrice;
     private String underwritingScope;
-    private String guaranteeAmount;
+    private Double guaranteeAmount;
     private String ageSupport;
     private Integer guaranteeTime;
     private String diseaseProtection;

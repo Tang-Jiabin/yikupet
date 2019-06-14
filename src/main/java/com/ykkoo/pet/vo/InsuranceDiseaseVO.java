@@ -17,6 +17,8 @@ public class InsuranceDiseaseVO {
     private Integer specificNumber;
     private String claimExplanation;
     private Integer typeId;
+    private Double claimAmount;
+
 
 
 }
