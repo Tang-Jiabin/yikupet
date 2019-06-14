@@ -117,6 +117,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         insurancePolicy.setUserId(userId);
         insurancePolicy.setAnimalId(animal.getAnimalId());
         insurancePolicy.setInsuranceId(insurance.getInsuranceId());
+        insurancePolicy.setInsuranceType(insurance.getInsuranceType());
         insurancePolicy.setInsuranceStatus(7);
         insurancePolicy.setClaimStatus(1);
         insurancePolicy.setAuditStatus(1);

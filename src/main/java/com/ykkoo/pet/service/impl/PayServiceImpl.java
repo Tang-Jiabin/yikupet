@@ -125,7 +125,7 @@ public class PayServiceImpl implements PayService {
 
     private void callbackUpdate(Map map) {
 
-        PetInsurancePolicy insurancePolicy = this.insurancePolicyRepository.findByInsurancePolicyId((Integer) map.get("insurancePolicyId"));
+        PetInsurancePolicy insurancePolicy = insurancePolicyRepository.findByInsurancePolicyId((Integer) map.get("insurancePolicyId"));
         insurancePolicy.setInsuranceStatus(2);
         insurancePolicyRepository.save(insurancePolicy);
         PetAnimal animal = this.animalRepository.findByAnimalId((Integer) map.get("animalId"));
@@ -145,7 +145,6 @@ public class PayServiceImpl implements PayService {
         }
 
         insuranceDiseaseRepository.saveAll(insuranceDiseaseList);
-
 
         Integer promoterId = (Integer) map.get("promoterId");
 

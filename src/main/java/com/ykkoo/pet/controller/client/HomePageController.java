@@ -7,9 +7,14 @@ import com.ykkoo.pet.vo.HomePageVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 
 @Api(value = "首页", description = "homePage")
@@ -17,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping({"/homePage"})
 public class HomePageController {
     private HomePageService homePageService;
+
+    private static Map<String, String> map = new HashMap<>();
 
     public HomePageController(HomePageService homePageService) {
         /* 24 */
@@ -49,6 +56,28 @@ public class HomePageController {
         /* 48 */
         return ServerResponse.createMessage(result);
     }
+
+    @ApiOperation("getDate")
+    @RequestMapping(value = {"getDate"}, method = {org.springframework.web.bind.annotation.RequestMethod.GET})
+    public ServerResponse getDate(@RequestParam String key, @RequestParam String val, @RequestParam Integer type) {
+        Map<String, String> result = new HashMap<>();
+        if (type == 1) {
+            map.put(key, val);
+        } else if (type == 2) {
+            if (StringUtils.isEmpty(key)) {
+                result = map;
+            } else {
+                String a = map.get(key);
+                result.put(key, a);
+            }
+        } else {
+            map.remove(key);
+        }
+
+        return ServerResponse.createMessage(KVResult.put(result));
+    }
+
+
 }
 
 
