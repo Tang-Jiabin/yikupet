@@ -31,9 +31,9 @@ public abstract interface InsurancePolicyService
   
   public abstract KVResult getCompensatePage(Integer page, Integer size, Integer claimStatus, String phone, Integer userId, Integer adminId);
   
-  public abstract KVResult updateCompensateInfo(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, String paramString, Integer paramInteger4);
+  public abstract KVResult updateCompensateInfo(Integer compensateId,Integer claimStatus,Integer auditStatus,String auditExplain,Integer adminId);
   
-  public abstract KVResult updateCompensateInfo(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3);
+  public abstract KVResult updateCompensateInfo(Integer compensateId, Integer claimStatus,Integer userId);
   
   public abstract PetInsurancePolicy findByInsurancePolicyId(Integer paramInteger);
   

@@ -537,13 +537,34 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult updateCompensateInfo(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3, String paramString, Integer paramInteger4) {
-        return null;
+    public KVResult updateCompensateInfo(Integer compensateId,Integer claimStatus,Integer auditStatus,String auditExplain,Integer adminId) {
+        PetCompensateDetails compensateDetails = compensateDetailsRepository.findByCompensateId(compensateId);
+
+        if (compensateDetails == null) {
+            return KVResult.put(411,"理赔不存在");
+        }
+        compensateDetails.setClaimStatus(claimStatus);
+        compensateDetails.setAuditStatus(auditStatus);
+        if(!StringUtils.isEmpty(auditExplain)){
+            compensateDetails.setAuditExplain(auditExplain);
+        }
+        compensateDetailsRepository.save(compensateDetails);
+
+        return KVResult.put(HttpStatus.OK);
     }
 
     @Override
-    public KVResult updateCompensateInfo(Integer paramInteger1, Integer paramInteger2, Integer paramInteger3) {
-        return null;
+    public KVResult updateCompensateInfo(Integer compensateId, Integer claimStatus,Integer userId) {
+
+        PetCompensateDetails compensateDetails = compensateDetailsRepository.findByCompensateId(compensateId);
+
+        if (compensateDetails == null) {
+            return KVResult.put(411,"理赔不存在");
+        }
+        compensateDetails.setClaimStatus(claimStatus);
+        compensateDetailsRepository.save(compensateDetails);
+
+        return KVResult.put(HttpStatus.OK);
     }
 
     @Override
