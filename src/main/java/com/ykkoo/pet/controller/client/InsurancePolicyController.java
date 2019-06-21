@@ -82,7 +82,7 @@ public class InsurancePolicyController {
     @Authorization
     @ApiOperation("申请理赔")
     @RequestMapping(value = {"applyClaims"}, method = {org.springframework.web.bind.annotation.RequestMethod.GET})
-    public ServerResponse applyClaims(@RequestParam Integer insurancePolicyId, @RequestParam List<Long> insuranceDiseaseIdList, @ApiIgnore @RequestAttribute Integer userId) {
+    public ServerResponse applyClaims(@RequestParam Integer insurancePolicyId, @RequestParam List<Long> insuranceDiseaseIdList,@RequestParam Double totalAmount, @ApiIgnore @RequestAttribute Integer userId) {
         /*  77 */
         KVResult result = this.insurancePolicyService.applyClaims(insurancePolicyId,insuranceDiseaseIdList, userId);
         /*  78 */

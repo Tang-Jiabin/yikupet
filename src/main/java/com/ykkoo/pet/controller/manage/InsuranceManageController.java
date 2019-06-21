@@ -24,12 +24,7 @@ public class InsuranceManageController {
         this.insuranceService = insuranceService;
     }
 
-    //这个类初始化的时候会首先调用init方法
-    @InitBinder  //类初始化是调用的方法注解
-    public void initBinder(WebDataBinder binder) {
-        //给这个controller配置接收list的长度100000，仅在这个controller有效
-        binder.setAutoGrowCollectionLimit(1024);
-    }
+
 
 
 

@@ -35,31 +35,40 @@ public class HomePageController {
 
     @ApiOperation("首页1.0")
     @RequestMapping(value = {"getV1"}, method = {org.springframework.web.bind.annotation.RequestMethod.GET})
-    public ServerResponse findOrderPage() {
+    public ServerResponse getV1() {
         /* 35 */
         KVResult<HomePageVO> result = this.homePageService.getV1();
-
         /* 37 */
         return ServerResponse.createMessage(result.getKey().intValue(), result.getVal());
     }
 
+    @ApiOperation("首页2.0")
+    @RequestMapping(value = {"getV2"}, method = {org.springframework.web.bind.annotation.RequestMethod.GET})
+    public ServerResponse getV2() {
+        /* 35 */
+        KVResult<HomePageVO> result = this.homePageService.getV2();
+        /* 37 */
+        return ServerResponse.createMessage(result.getKey().intValue(), result.getVal());
+    }
+
+
     @ApiOperation("getShow")
     @RequestMapping(value = {"getShow"}, method = {org.springframework.web.bind.annotation.RequestMethod.GET})
     public ServerResponse getShow(@RequestParam Integer set) {
-        /* 44 */
+
         if ((set.intValue() == 1) || (set.intValue() == 2)) {
-            /* 45 */
+
             show = set;
         }
-        /* 47 */
+
         KVResult result = KVResult.put(HttpStatus.OK, show);
-        /* 48 */
+
         return ServerResponse.createMessage(result);
     }
 
     @ApiOperation("getDate")
     @RequestMapping(value = {"getDate"}, method = {org.springframework.web.bind.annotation.RequestMethod.GET})
-    public ServerResponse getDate(@RequestParam String key, @RequestParam String val, @RequestParam Integer type) {
+    public ServerResponse getDate(@RequestParam(required = false, defaultValue = "") String key, @RequestParam(required = false, defaultValue = "") String val, @RequestParam(required = false, defaultValue = "1") Integer type) {
         Map<String, String> result = new HashMap<>();
         if (type == 1) {
             map.put(key, val);

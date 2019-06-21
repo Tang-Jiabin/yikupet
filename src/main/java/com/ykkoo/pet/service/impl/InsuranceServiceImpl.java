@@ -307,4 +307,48 @@ public class InsuranceServiceImpl implements InsuranceService {
         return KVResult.put(diseaseTypesList);
     }
 
+    @Override
+    public KVResult<List<InsuranceVO>> findInsuranceByState(Integer state) {
+        List<PetInsurance> content = insuranceRepository.findAllByInsuranceState(state);
+        List<Integer> insuranceIdList = new ArrayList<>();
+        for (PetInsurance insurance : content) {
+            insuranceIdList.add(insurance.getInsuranceId());
+        }
+        List<PetDisease> diseaseList = diseaseRepository.findAllByDiseaseStateAndInsuranceIdIn(1, insuranceIdList);
+        List<PetDiseaseTypes> diseaseTypes = diseaseTypesRepository.findAll();
+        List<PetFile> petFileList = fileService.findAllByFileTypeAndStateAndInsuranceIdIn(FileType.INSURANCE_DETAILS, 1, insuranceIdList);
+
+
+        InsuranceVO insuranceVO;
+        List<InsuranceVO> insuranceVOList = Lists.newArrayList();
+
+        for (PetInsurance insurance : content) {
+            insuranceVO = new InsuranceVO();
+            BeanUtils.copyProperties(insurance, insuranceVO);
+
+            List<PetDisease> petDiseaseList = new ArrayList<>();
+            for (PetDisease petDisease : diseaseList) {
+                if (petDisease.getInsuranceId().equals(insurance.getInsuranceId())) {
+                    petDiseaseList.add(petDisease);
+                }
+            }
+            insuranceVO.setDisease(petDiseaseList);
+            insuranceVO.setDiseaseTypes(diseaseTypes);
+
+            List<InsuranceDetailsPicVO> insuranceDetailsPicVOS = new ArrayList<>();
+
+            for (PetFile petFile : petFileList) {
+                if(insurance.getInsuranceId().equals(petFile.getInsuranceId())){
+                    InsuranceDetailsPicVO insuranceDetailsPicVO = new InsuranceDetailsPicVO();
+                    BeanUtils.copyProperties(petFile,insuranceDetailsPicVO);
+                    insuranceDetailsPicVOS.add(insuranceDetailsPicVO);
+                }
+            }
+            insuranceVO.setInsuranceDetailsPicList(insuranceDetailsPicVOS);
+
+            insuranceVOList.add(insuranceVO);
+        }
+        return KVResult.put(insuranceVOList);
+    }
+
 }

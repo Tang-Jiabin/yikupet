@@ -17,6 +17,8 @@ public abstract interface PetInsuranceRepository
   public abstract List<PetInsurance> findAllByInsuranceIdIn(List<Integer> paramList);
   
   public abstract List<PetInsurance> findAllByInsuranceTypeAndInsuranceState(Integer paramInteger, int paramInt);
+
+  List<PetInsurance> findAllByInsuranceState(Integer state);
 }
 
 

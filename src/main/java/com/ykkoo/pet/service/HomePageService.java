@@ -5,7 +5,10 @@ import com.ykkoo.pet.vo.HomePageVO;
 
 public abstract interface HomePageService
 {
-  public abstract KVResult<HomePageVO> getV1();
+  KVResult<HomePageVO> getV1();
+
+  KVResult<HomePageVO> getV2();
+
 }
 
 

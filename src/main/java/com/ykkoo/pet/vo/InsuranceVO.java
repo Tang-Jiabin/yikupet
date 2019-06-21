@@ -21,7 +21,7 @@ public class InsuranceVO {
     private Integer insuranceState;
     private Integer insurancePrice;
     private String underwritingScope;
-    private String guaranteeAmount;
+    private Double guaranteeAmount;
     private String ageSupport;
     private Integer guaranteeTime;
     private InsuranceEvaluationVO insuranceEvaluation;

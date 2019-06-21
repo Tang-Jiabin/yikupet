@@ -33,7 +33,7 @@ public class PromoterDTO {
 
     private  String promotionArea;
 
-    private  String returnRatio;
+    private  Integer returnRatio;
 
     private  String accountNumber;
 

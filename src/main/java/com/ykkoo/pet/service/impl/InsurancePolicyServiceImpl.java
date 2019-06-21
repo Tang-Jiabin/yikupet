@@ -403,6 +403,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         List<FileDTO> save = Lists.newArrayList();
         List<FileDTO> claimDiagnosisList = Lists.newArrayList();
         List<FileDTO> claimInvoiceList = Lists.newArrayList();
+        List<FileDTO> idPictureList = Lists.newArrayList();
         if (claimsVoucherDTO.getClaimDiagnosisList() != null) {
             claimDiagnosisList = claimsVoucherDTO.getClaimDiagnosisList();
         }
@@ -411,6 +412,9 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
             claimInvoiceList = claimsVoucherDTO.getClaimInvoiceList();
         }
 
+        if(claimsVoucherDTO.getIdPictureList() != null){
+            idPictureList = claimsVoucherDTO.getIdPictureList();
+        }
 
         for (FileDTO fileDTO : claimDiagnosisList) {
             fileDTO.setFileType(FileType.CLAIM_DIAGNOSIS);
@@ -424,6 +428,13 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
             fileDTO.setFileType(FileType.CLAIM_INVOICE);
             fileDTO.setCompensateId(claimsVoucherDTO.getCompensateId());
             fileDTO.setUploadPath(String.format("compensate/%s/invoice/", claimsVoucherDTO.getCompensateId()));
+            save.add(fileDTO);
+        }
+
+        for (FileDTO fileDTO : idPictureList) {
+            fileDTO.setFileType(FileType.CLAIM_IDPICTURE);
+            fileDTO.setCompensateId(claimsVoucherDTO.getCompensateId());
+            fileDTO.setUploadPath(String.format("compensate/%s/idPicture/", claimsVoucherDTO.getCompensateId()));
             save.add(fileDTO);
         }
 

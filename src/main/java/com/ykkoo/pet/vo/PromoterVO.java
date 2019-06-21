@@ -32,7 +32,7 @@ public class PromoterVO {
 
     private  String promotionArea;
 
-    private  String returnRatio;
+    private  Integer returnRatio;
 
     private  String accountNumber;
 
@@ -45,7 +45,7 @@ public class PromoterVO {
     private  String salesmanTelephone;
 
     private String token;
-
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern="yyyy-MM-dd HH:mm:ss", timezone="GMT+8")
     private Date createDate;
 
     private Integer adminId;

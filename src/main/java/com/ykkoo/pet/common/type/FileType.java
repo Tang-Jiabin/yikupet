@@ -14,7 +14,8 @@ public enum FileType {
     CLAIM_VOUCHER,
     DIAGNOSTIC_VOUCHER,
     IDENTITY_CARD_INFO,
-    BANK_CARD_INFO;
+    BANK_CARD_INFO,
+    CLAIM_IDPICTURE;
 
 
 }
