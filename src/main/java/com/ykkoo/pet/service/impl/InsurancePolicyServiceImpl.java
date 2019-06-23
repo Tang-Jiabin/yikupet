@@ -342,7 +342,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult applyClaims(Integer insurancePolicyId, List<Long> insuranceDiseaseIdList, Integer userId) {
+    public KVResult applyClaims(Integer insurancePolicyId, List<Long> insuranceDiseaseIdList,Double totalAmount,Double claimsAmount,String alipay,String realName, Integer userId) {
         PetInsurancePolicy insurancePolicy = insurancePolicyRepository.findByInsurancePolicyId(insurancePolicyId);
         if (insurancePolicy.getClaimStatus() != 1 && insurancePolicy.getClaimStatus() != 5) {
             return KVResult.put(411, "当前保单您已申请过理赔或理赔尚未完成");
@@ -384,6 +384,10 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         compensateDetails.setInsuranceName(insurance.getInsuranceName());
         compensateDetails.setInsuranceStartDate(insurancePolicy.getInsuranceStartDate());
         compensateDetails.setInsuranceEndDate(insurancePolicy.getInsuranceEndDate());
+        compensateDetails.setTotalAmount(totalAmount);
+        compensateDetails.setClaimsAmount(claimsAmount);
+        compensateDetails.setAlipay(alipay);
+        compensateDetails.setRealName(realName);
         compensateDetailsRepository.save(compensateDetails);
 
         CompensateDetailsVO compensateDetailsVO = new CompensateDetailsVO();

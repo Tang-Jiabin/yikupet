@@ -39,6 +39,11 @@ public class PetCompensateDetails {
 
     private String address;
 
+    private Double totalAmount;
+    private Double claimsAmount;
+    private String alipay;
+    private String realName;
+
 }
 
 

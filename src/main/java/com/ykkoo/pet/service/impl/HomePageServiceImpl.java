@@ -204,6 +204,10 @@ public class HomePageServiceImpl implements HomePageService {
         /* 97 */
         homePageVO.setShow(Integer.valueOf(1));
 
+        homePageVO.setFloatingWindowPictures("红包图片");
+        homePageVO.setFloatingWindowLink("红包点击链接");
+        homePageVO.setPublicNumberPictures("公众号图片链接");
+
         /* 99 */
         return KVResult.put(homePageVO);
     }

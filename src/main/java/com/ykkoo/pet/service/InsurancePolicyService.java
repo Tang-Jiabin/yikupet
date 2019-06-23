@@ -23,7 +23,7 @@ public abstract interface InsurancePolicyService
   
   public abstract List<PetInsurancePolicy> findByUserIdAndInsuranceStatus(Integer paramInteger, int paramInt);
   
-  public abstract KVResult applyClaims(Integer paramInteger1,List<Long> insuranceDiseaseIdList, Integer paramInteger2);
+  public abstract KVResult applyClaims(Integer paramInteger1,List<Long> insuranceDiseaseIdList,Double totalAmount,Double claimsAmount,String alipay,String realName, Integer paramInteger2);
   
   public abstract KVResult uploadClaimsVoucher(ClaimsVoucherDTO paramClaimsVoucherDTO, Integer paramInteger);
   

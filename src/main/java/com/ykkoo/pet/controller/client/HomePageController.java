@@ -48,7 +48,7 @@ public class HomePageController {
         /* 35 */
         KVResult<HomePageVO> result = this.homePageService.getV2();
         /* 37 */
-        return ServerResponse.createMessage(result.getKey().intValue(), result.getVal());
+        return ServerResponse.createMessage(result);
     }
 
 

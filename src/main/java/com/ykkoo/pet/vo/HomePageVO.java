@@ -16,6 +16,10 @@ public class HomePageVO {
     private Integer cost;
     private Integer show;
 
+    private String floatingWindowPictures;
+    private String floatingWindowLink;
+    private String publicNumberPictures;
+
 }
 
 
