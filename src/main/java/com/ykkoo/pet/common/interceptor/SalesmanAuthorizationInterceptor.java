@@ -1,10 +1,9 @@
 package com.ykkoo.pet.common.interceptor;
 
-import com.ykkoo.pet.common.annotation.HospitalAuthorization;
 import com.ykkoo.pet.common.annotation.PromoterAuthorization;
+import com.ykkoo.pet.common.annotation.SalesmanAuthorization;
 import com.ykkoo.pet.common.token.TokenManage;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.method.HandlerMethod;
@@ -17,17 +16,16 @@ import java.lang.reflect.Method;
 /**
  * @author : J.Tang
  * @version : v1.0
- * @date : 2019/6/13
+ * @date : 2019/6/24
  * @email : seven_tjb@163.com
  **/
 @AllArgsConstructor
 @Component
-public class PromoterAuthorizationInterceptor  extends HandlerInterceptorAdapter  {
-
-
+public class SalesmanAuthorizationInterceptor extends HandlerInterceptorAdapter {
     private TokenManage manager;
 
 
+    @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
         /* 36 */
@@ -56,7 +54,7 @@ public class PromoterAuthorizationInterceptor  extends HandlerInterceptorAdapter
         /* 51 */
         Method method = handlerMethod.getMethod();
         /* 52 */
-        PromoterAuthorization annotation = (PromoterAuthorization) method.getAnnotation(PromoterAuthorization.class);
+        SalesmanAuthorization annotation = (SalesmanAuthorization) method.getAnnotation(SalesmanAuthorization.class);
         /* 53 */
         if (annotation == null) {
             /* 54 */
@@ -76,14 +74,14 @@ public class PromoterAuthorizationInterceptor  extends HandlerInterceptorAdapter
             /* 64 */
             if (token.equals("tang")) {
                 /* 65 */
-                request.setAttribute("promoterId", Integer.valueOf(1));
+                request.setAttribute("salesmanId", Integer.valueOf(1));
                 /* 66 */
                 return true;
             }
             /* 68 */
-            if (manager.checkPromoterToken(token)) {
+            if (manager.checkSalesmanToken(token)) {
 
-                request.setAttribute("promoterId", manager.getPromoterToken(token).getUserId());
+                request.setAttribute("salesmanId", manager.getSalesmanToken(token).getUserId());
 
                 return true;
             }
@@ -98,4 +96,5 @@ public class PromoterAuthorizationInterceptor  extends HandlerInterceptorAdapter
         /* 79 */
         return false;
     }
+
 }

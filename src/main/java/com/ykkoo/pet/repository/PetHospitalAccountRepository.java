@@ -2,6 +2,7 @@ package com.ykkoo.pet.repository;
 
 import com.ykkoo.pet.pojo.PetHospitalAccount;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +23,9 @@ public interface PetHospitalAccountRepository extends JpaRepository<PetHospitalA
     List<PetHospitalAccount> findAllByPromoterId(Integer promoterId);
 
     List<PetHospitalAccount> findAllByPromoterIdAndState(Integer promoterId, Integer state);
+
+    List<PetHospitalAccount> findAllByPromoterIdIn(List<Integer> promoterIdList);
+    List<PetHospitalAccount> findAllByPromoterIdInAndDateBetween(List<Integer> promoterIdList, Date startDate,Date endDate);
 }
 
 

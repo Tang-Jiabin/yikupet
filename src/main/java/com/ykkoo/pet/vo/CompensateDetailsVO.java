@@ -13,49 +13,28 @@ public class CompensateDetailsVO {
     private Integer claimStatus;
     private Integer auditStatus;
     private String auditExplain;
-
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date applicationDate;
-
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date updateDate;
     private String cardNumber;
-
     private String name;
-
     private String address;
-
-
-
-
-
     private String insuranceName;
-
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date insuranceStartDate;
-
-
-
-
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date insuranceEndDate;
-
-
-
-
-
     private InsurancePolicyVO insurancePolicyVO;
     private UserVO userVO;
-
-
-
-
-
     private java.util.List<com.ykkoo.pet.pojo.PetFile> claimInvoice;
     private java.util.List<com.ykkoo.pet.pojo.PetFile> claimDiagnosis;
     private java.util.List<com.ykkoo.pet.pojo.PetFile> claimVoucher;
-
-
+    private java.util.List<com.ykkoo.pet.pojo.PetFile> claimIdPic;
+    private Double totalAmount;
+    private Double claimsAmount;
+    private String alipay;
+    private String realName;
 
 }
 

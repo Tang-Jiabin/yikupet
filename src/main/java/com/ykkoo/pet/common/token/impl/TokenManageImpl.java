@@ -7,8 +7,11 @@ import com.ykkoo.pet.common.token.TokenManage;
 import com.ykkoo.pet.common.token.TokenModel;
 import com.ykkoo.pet.pojo.PetHospitalInfo;
 import com.ykkoo.pet.pojo.PetPromoter;
+import com.ykkoo.pet.pojo.PetReservationInfo;
+import com.ykkoo.pet.pojo.PetSalesman;
 import com.ykkoo.pet.repository.PetAdminRepository;
 import com.ykkoo.pet.repository.PetPromoterRepository;
+import com.ykkoo.pet.repository.PetSalesmanRepository;
 import com.ykkoo.pet.repository.PetUserInfoRepository;
 
 import java.io.UnsupportedEncodingException;
@@ -23,6 +26,7 @@ public class TokenManageImpl implements TokenManage {
     private PetUserInfoRepository userInfoRepository;
     private com.ykkoo.pet.repository.PetHospitalInfoRepository hospitalInfoRepository;
     private PetPromoterRepository promoterRepository;
+    private PetSalesmanRepository salesmanRepository;
     private static final String ISSUER = "pet.ykkoo.com";
     private static final String ADMIN_SECRET = "R78{7(53!~3&>5}3}61^~LX,0m";
     private static final String ADMIN_KEY = "admin";
@@ -32,6 +36,9 @@ public class TokenManageImpl implements TokenManage {
     private static final String HOSPITAL_KEY = "hospital";
     private static final String PROMOTER_SECRET = "f*H*(^l&{:L6ad9a3odSsDff8fK";
     private static final String PROMOTER_KEY = "promoter";
+
+    private static final String SALESMAN_KEY = "salesman";
+    private static final String SALESMAN_SECRET = "f*H*(^l&{:L6adf*&93dSfrff8)%";
 
 
     @Override
@@ -377,6 +384,93 @@ public class TokenManageImpl implements TokenManage {
         /* 221 */
         return new TokenModel(promoterId, jwt.getToken());
 
+    }
+
+    @Override
+    public TokenModel createSalesmanToken(PetSalesman salesman) {
+        /* 170 */
+        String token = null;
+
+
+        try {
+            /* 176 */
+            token = JWT.create().withIssuer("pet.ykkoo.com").withJWTId(java.util.UUID.randomUUID().toString().toUpperCase()).withClaim(SALESMAN_KEY, salesman.getSalesmanId()).sign(Algorithm.HMAC256(SALESMAN_SECRET));
+        } catch (UnsupportedEncodingException e) {
+            /* 178 */
+            token = "error";
+        }
+
+        /* 181 */
+        TokenModel model = new TokenModel(salesman.getSalesmanId(), token);
+
+        /* 185 */
+        return model;
+
+    }
+
+    @Override
+    public TokenModel getSalesmanToken(String token) {
+        /* 215 */
+        com.auth0.jwt.JWTVerifier verifier = null;
+        try {
+            verifier = JWT.require(Algorithm.HMAC256(SALESMAN_SECRET)).withIssuer("pet.ykkoo.com").build();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        if (verifier == null) {
+            return null;
+        }
+        /* 216 */
+        DecodedJWT jwt = verifier.verify(token);
+        /* 217 */
+        Integer promoterId = jwt.getClaim(SALESMAN_KEY).asInt();
+        /* 218 */
+
+        if (promoterId == null) {
+            /* 219 */
+            return null;
+        }
+        /* 221 */
+        return new TokenModel(promoterId, jwt.getToken());
+    }
+
+    @Override
+    public boolean checkSalesmanToken(String token) {
+        /* 190 */
+        if (StringUtils.isEmpty(token)) {
+            /* 191 */
+            return false;
+        }
+        try {
+            /* 194 */
+            TokenModel tokenModel = getSalesmanToken(token);
+            /* 195 */
+            String dbtoken = null;
+
+            /* 197 */
+            PetSalesman petSalesman = null;
+            /* 198 */
+            if (tokenModel != null) {
+                /* 199 */
+                petSalesman = salesmanRepository.findBySalesmanId(tokenModel.getUserId());
+            }
+            /* 201 */
+            if (petSalesman != null) {
+                /* 202 */
+                dbtoken = petSalesman.getToken();
+            }
+            /* 204 */
+
+            return (!StringUtils.isEmpty(dbtoken)) && (token.equals(dbtoken));
+
+        } catch (Exception e) {
+            /* 206 */
+            e.printStackTrace();
+        }
+        /* 208 */
+
+        return false;
     }
 }
 

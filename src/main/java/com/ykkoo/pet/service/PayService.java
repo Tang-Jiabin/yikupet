@@ -4,10 +4,9 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public abstract interface PayService
-{
-  public abstract String tenPayCallback(HttpServletRequest paramHttpServletRequest, HttpServletResponse paramHttpServletResponse)
-    throws IOException;
+public interface PayService {
+    String tenPayCallback(HttpServletRequest paramHttpServletRequest, HttpServletResponse paramHttpServletResponse)
+            throws IOException;
 }
 
 

@@ -27,6 +27,7 @@ public class PetPromoter {
 
     private String promotionName;
 
+    private Integer salesmanId;
 
 
     private String contactNumber;

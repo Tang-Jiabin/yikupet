@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * 推广员
  *
@@ -20,4 +22,6 @@ public interface PetPromoterRepository extends JpaRepository<PetPromoter,Integer
     PetPromoter findByInvitationCode(String invitationCode);
 
     PetPromoter findByAccountNumberAndPassword(String name, String password);
+
+    List<PetPromoter> findAllBySalesmanId(Integer salesmanId);
 }

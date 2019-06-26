@@ -62,6 +62,7 @@ public class HospitalServiceImpl implements HospitalService {
     private PetMedicalInfoRepository medicalInfoRepository;
     private PetHospitalAccountRepository hospitalAccountRepository;
     private PetCompensateDetailsRepository compensateDetailsRepository;
+    private PetSalesmanRepository salesmanRepository;
 
     @Override
     public KVResult addHospital(HospitalDTO hospitalDTO, Integer adminId) {
@@ -411,6 +412,7 @@ public class HospitalServiceImpl implements HospitalService {
         }
 
         BeanUtils.copyProperties(promoterDTO, promoter);
+        promoter.setSalesmanId(adminId);
         promoter = promoterRepository.save(promoter);
 
         FileUploadDTO fileUploadDTO = new FileUploadDTO();
@@ -585,6 +587,64 @@ public class HospitalServiceImpl implements HospitalService {
 
 
         return KVResult.put(insurancePolicyVOList);
+    }
+
+    @Override
+    public KVResult addSalesman(Integer salesmanId, String name, String account, String password,String phone,String region, Integer state, Integer adminId) {
+        PetSalesman petSalesman;
+        if (salesmanId == null || salesmanId == 0) {
+            if (StringUtils.isEmpty(name) || StringUtils.isEmpty(account) || StringUtils.isEmpty(password)) {
+                return KVResult.put(411, "数据不完整");
+            }
+
+            petSalesman = new PetSalesman();
+
+        } else {
+            petSalesman = salesmanRepository.findBySalesmanId(salesmanId);
+        }
+
+        if (!StringUtils.isEmpty(name)) {
+            petSalesman.setName(name);
+        }
+        if (!StringUtils.isEmpty(account)) {
+            petSalesman.setAccount(account);
+        }
+        if (!StringUtils.isEmpty(password)) {
+            petSalesman.setPassword(password);
+        }
+        if(!StringUtils.isEmpty(phone)){
+            petSalesman.setPhone(phone);
+        }
+        if(!StringUtils.isEmpty(region)){
+            petSalesman.setRegion(region);
+        }
+        petSalesman.setToken("");
+        petSalesman.setCreateDate(new Date());
+        petSalesman.setAdminId(adminId);
+        if(state != null && state != 0){
+            petSalesman.setState(state);
+        }
+        salesmanRepository.save(petSalesman);
+
+        return KVResult.put(HttpStatus.OK);
+    }
+
+    @Override
+    public KVResult getSalesmanPage(Integer page, Integer size, Integer state, Integer adminId) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.Direction.DESC, "salesmanId");
+        Page<PetSalesman> salesmanPage = salesmanRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> list = new ArrayList<>();
+
+            if (state != null && state != 0) {
+                list.add(criteriaBuilder.equal(root.get("state").as(Integer.class), state));
+            }
+
+            Predicate[] p = new Predicate[list.size()];
+            return criteriaBuilder.and(list.toArray(p));
+        }, pageable);
+
+        return KVResult.put(salesmanPage);
+
     }
 
 

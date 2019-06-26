@@ -1,6 +1,7 @@
 package com.ykkoo.pet.common.token;
 
 import com.ykkoo.pet.pojo.PetHospitalInfo;
+import com.ykkoo.pet.pojo.PetSalesman;
 
 
 public  interface TokenManage {
@@ -27,6 +28,12 @@ public  interface TokenManage {
     boolean checkPromoterToken(String token);
 
     TokenModel getPromoterToken(String token);
+
+    TokenModel createSalesmanToken(PetSalesman salesman);
+
+    TokenModel getSalesmanToken(String token);
+
+    boolean checkSalesmanToken(String token);
 }
 
 

@@ -328,9 +328,11 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         List<PetFile> claimInvoice = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_INVOICE, 1, compensateDetails.getCompensateId());
         List<PetFile> claimVoucher = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_VOUCHER, 1, compensateDetails.getCompensateId());
         List<PetFile> claimDiagnosis = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_DIAGNOSIS, 1, compensateDetails.getCompensateId());
+        List<PetFile> claimIdPic = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_IDPICTURE, 1, compensateDetails.getCompensateId());
         compensateDetailsVO.setClaimInvoice(claimInvoice);
         compensateDetailsVO.setClaimVoucher(claimVoucher);
         compensateDetailsVO.setClaimDiagnosis(claimDiagnosis);
+        compensateDetailsVO.setClaimIdPic(claimIdPic);
 
 
         return KVResult.put(compensateDetailsVO);
@@ -342,7 +344,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult applyClaims(Integer insurancePolicyId, List<Long> insuranceDiseaseIdList,Double totalAmount,Double claimsAmount,String alipay,String realName, Integer userId) {
+    public KVResult applyClaims(Integer insurancePolicyId, List<Long> insuranceDiseaseIdList, Double totalAmount, Double claimsAmount, String alipay, String realName, Integer userId) {
         PetInsurancePolicy insurancePolicy = insurancePolicyRepository.findByInsurancePolicyId(insurancePolicyId);
         if (insurancePolicy.getClaimStatus() != 1 && insurancePolicy.getClaimStatus() != 5) {
             return KVResult.put(411, "当前保单您已申请过理赔或理赔尚未完成");
@@ -359,11 +361,11 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         Double amount = 0D;
         for (PetInsuranceDisease insuranceDisease : insuranceDiseaseList) {
             if (insuranceDisease.getClaimAmount() != null) {
-                amount = DoubleUtil.sum(amount,insuranceDisease.getClaimAmount());
+                amount = DoubleUtil.sum(amount, insuranceDisease.getClaimAmount());
             }
         }
 
-        amount = DoubleUtil.sub(guaranteeAmount,amount);
+        amount = DoubleUtil.sub(guaranteeAmount, amount);
         if (amount <= 0) {
             amount = 0D;
         }
@@ -416,12 +418,13 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
             claimInvoiceList = claimsVoucherDTO.getClaimInvoiceList();
         }
 
-        if(claimsVoucherDTO.getIdPictureList() != null){
+        if (claimsVoucherDTO.getIdPictureList() != null) {
             idPictureList = claimsVoucherDTO.getIdPictureList();
         }
 
         for (FileDTO fileDTO : claimDiagnosisList) {
             fileDTO.setFileType(FileType.CLAIM_DIAGNOSIS);
+            fileDTO.setState(1);
             fileDTO.setCompensateId(claimsVoucherDTO.getCompensateId());
             fileDTO.setUploadPath(String.format("compensate/%s/diagnosis/", claimsVoucherDTO.getCompensateId()));
             save.add(fileDTO);
@@ -430,6 +433,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
 
         for (FileDTO fileDTO : claimInvoiceList) {
             fileDTO.setFileType(FileType.CLAIM_INVOICE);
+            fileDTO.setState(1);
             fileDTO.setCompensateId(claimsVoucherDTO.getCompensateId());
             fileDTO.setUploadPath(String.format("compensate/%s/invoice/", claimsVoucherDTO.getCompensateId()));
             save.add(fileDTO);
@@ -437,6 +441,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
 
         for (FileDTO fileDTO : idPictureList) {
             fileDTO.setFileType(FileType.CLAIM_IDPICTURE);
+            fileDTO.setState(1);
             fileDTO.setCompensateId(claimsVoucherDTO.getCompensateId());
             fileDTO.setUploadPath(String.format("compensate/%s/idPicture/", claimsVoucherDTO.getCompensateId()));
             save.add(fileDTO);
@@ -456,6 +461,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
         if (!StringUtils.isEmpty(claimsVoucherDTO.getAddress())) {
             compensateDetails.setAddress(claimsVoucherDTO.getAddress());
         }
+        compensateDetails.setClaimStatus(3);
         compensateDetailsRepository.save(compensateDetails);
 
         Map<String, Object> resultMap = Maps.newHashMap();
@@ -498,7 +504,7 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult getCompensatePage(Integer page, Integer size, Integer claimStatus, String phone, Integer userId, Integer adminId) {
+    public KVResult getCompensatePage(Integer page, Integer size, Integer insurancePolicyId, Integer claimStatus, String phone, Integer userId, Integer adminId) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "compensateId");
         Page<PetCompensateDetails> compensateDetailsPage = compensateDetailsRepository.findAll((root, query, criteriaBuilder) -> {
@@ -513,6 +519,10 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
                 list.add(criteriaBuilder.equal(root.get("userId").as(Integer.class), userId));
             }
 
+            if (null != insurancePolicyId && insurancePolicyId != 0) {
+                list.add(criteriaBuilder.equal(root.get("insurancePolicyId").as(Integer.class), insurancePolicyId));
+
+            }
             Predicate[] p = new Predicate[list.size()];
             return criteriaBuilder.and(list.toArray(p));
         }, pageable);
@@ -538,9 +548,11 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
             List<PetFile> CLAIM_DIAGNOSIS = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_DIAGNOSIS, 1, compensateDetails.getCompensateId());
             List<PetFile> CLAIM_INVOICE = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_INVOICE, 1, compensateDetails.getCompensateId());
             List<PetFile> CLAIM_VOUCHER = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_VOUCHER, 1, compensateDetails.getCompensateId());
+            List<PetFile> CLAIM_IDPICTURE = fileService.findAllByFileTypeAndStateAndCompensateId(FileType.CLAIM_IDPICTURE, 1, compensateDetails.getCompensateId());
             compensateDetailsVO.setClaimDiagnosis(CLAIM_DIAGNOSIS);
             compensateDetailsVO.setClaimVoucher(CLAIM_VOUCHER);
             compensateDetailsVO.setClaimInvoice(CLAIM_INVOICE);
+            compensateDetailsVO.setClaimIdPic(CLAIM_IDPICTURE);
 
 
             compensateDetailsVOList.add(compensateDetailsVO);
@@ -552,15 +564,15 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult updateCompensateInfo(Integer compensateId,Integer claimStatus,Integer auditStatus,String auditExplain,Integer adminId) {
+    public KVResult updateCompensateInfo(Integer compensateId, Integer claimStatus, Integer auditStatus, String auditExplain, Integer adminId) {
         PetCompensateDetails compensateDetails = compensateDetailsRepository.findByCompensateId(compensateId);
 
         if (compensateDetails == null) {
-            return KVResult.put(411,"理赔不存在");
+            return KVResult.put(411, "理赔不存在");
         }
         compensateDetails.setClaimStatus(claimStatus);
         compensateDetails.setAuditStatus(auditStatus);
-        if(!StringUtils.isEmpty(auditExplain)){
+        if (!StringUtils.isEmpty(auditExplain)) {
             compensateDetails.setAuditExplain(auditExplain);
         }
         compensateDetailsRepository.save(compensateDetails);
@@ -569,12 +581,12 @@ public class InsurancePolicyServiceImpl implements InsurancePolicyService {
     }
 
     @Override
-    public KVResult updateCompensateInfo(Integer compensateId, Integer claimStatus,Integer userId) {
+    public KVResult updateCompensateInfo(Integer compensateId, Integer claimStatus, Integer userId) {
 
         PetCompensateDetails compensateDetails = compensateDetailsRepository.findByCompensateId(compensateId);
 
         if (compensateDetails == null) {
-            return KVResult.put(411,"理赔不存在");
+            return KVResult.put(411, "理赔不存在");
         }
         compensateDetails.setClaimStatus(claimStatus);
         compensateDetailsRepository.save(compensateDetails);

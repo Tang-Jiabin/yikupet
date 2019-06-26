@@ -121,10 +121,11 @@ public class InsurancePolicyController {
     @org.springframework.web.bind.annotation.GetMapping({"/getCompensatePage"})
     public ServerResponse getCompensatePage(@ApiParam("页码") @RequestParam(required = false, defaultValue = "0") Integer page,
                                             @ApiParam("条数") @RequestParam(required = false, defaultValue = "10") Integer size,
+                                            @ApiParam("保单ID") @RequestParam(required = false, defaultValue = "0") Integer insurancePolicyId,
                                             @ApiParam("理赔状态 1-未申请 2-待提交 3-审核中 4-理赔中 5-已结案 ") @RequestParam(required = false, defaultValue = "0") Integer claimStatus,
                                             @ApiIgnore @RequestAttribute Integer userId) {
         /* 105 */
-        KVResult result = this.insurancePolicyService.getCompensatePage(page, size, claimStatus, "", userId, null);
+        KVResult result = this.insurancePolicyService.getCompensatePage(page, size, insurancePolicyId,claimStatus, "", userId, null);
         /* 106 */
         return ServerResponse.createMessage(result.getKey().intValue(), result.getVal());
     }

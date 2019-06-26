@@ -43,6 +43,7 @@ public class PayServiceImpl implements PayService {
     private PetDiseaseRepository diseaseRepository;
     private PetInsuranceDiseaseRepository insuranceDiseaseRepository;
     private PetPromoterRepository promoterRepository;
+    private PetInsuranceRepository insuranceRepository;
 
     public String tenPayCallback(HttpServletRequest request, HttpServletResponse response) throws IOException {
         InputStream inStream = request.getInputStream();
@@ -146,6 +147,7 @@ public class PayServiceImpl implements PayService {
 
         insuranceDiseaseRepository.saveAll(insuranceDiseaseList);
 
+        PetInsurance insurance = insuranceRepository.findByInsuranceId(insurancePolicy.getInsuranceId());
         Integer promoterId = (Integer) map.get("promoterId");
 
         if (promoterId != null && promoterId != 0) {
@@ -166,6 +168,7 @@ public class PayServiceImpl implements PayService {
             hospitalAccount.setSource("邀请码返利");
             hospitalAccount.setRatio(promoter.getReturnRatio());
             hospitalAccount.setState(1);
+            hospitalAccount.setInsuranceName(insurance.getInsuranceName());
             hospitalAccount.setWithdrawalId(0);
             hospitalAccount.setAccountType(2);
             hospitalAccountRepository.save(hospitalAccount);

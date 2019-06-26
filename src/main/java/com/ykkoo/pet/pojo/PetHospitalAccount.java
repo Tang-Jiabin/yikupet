@@ -25,6 +25,11 @@ public class PetHospitalAccount {
      * 账户类型 1-商户 2-推广员
      */
     private Integer accountType;
+
+    /**
+     * 保险名称
+     */
+    private String insuranceName;
 }
 
 

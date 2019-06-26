@@ -33,6 +33,10 @@ public abstract interface HospitalService
   KVResult getPromoterPage(Integer page, Integer size, Integer state, Integer adminId);
 
     KVResult getInsurancePolicyDetails(String phone,String cardNum, Integer hospitalInfoId);
+
+    KVResult addSalesman(Integer salesmanId,String name, String account, String password,String phone,String region,Integer state, Integer adminId);
+
+    KVResult getSalesmanPage(Integer page, Integer size, Integer state, Integer adminId);
 }
 
 

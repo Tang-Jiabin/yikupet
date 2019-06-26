@@ -29,7 +29,7 @@ public abstract interface InsurancePolicyService
   
   public abstract List<InsuranceDiseaseVO> findAllInsuranceDiseaseByReservationId(Integer paramInteger);
   
-  public abstract KVResult getCompensatePage(Integer page, Integer size, Integer claimStatus, String phone, Integer userId, Integer adminId);
+  public abstract KVResult getCompensatePage(Integer page, Integer size,Integer insurancePolicyId, Integer claimStatus, String phone, Integer userId, Integer adminId);
   
   public abstract KVResult updateCompensateInfo(Integer compensateId,Integer claimStatus,Integer auditStatus,String auditExplain,Integer adminId);
   
