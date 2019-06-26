@@ -50,6 +50,7 @@ public class PromoterController {
     }
 
 
+
     @PromoterAuthorization
     @ApiOperation("提现")
     @PostMapping({"/cashWithdrawal"})
