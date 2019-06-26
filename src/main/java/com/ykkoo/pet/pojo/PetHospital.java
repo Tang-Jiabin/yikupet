@@ -33,7 +33,10 @@ public class PetHospital {
     private Date createDate;
     private Date updateDate;
 
-
+    /**
+     * 销售员ID
+     */
+    private Integer salesmanId;
     /**
      * 城市
      */

@@ -65,7 +65,7 @@ public class HospitalServiceImpl implements HospitalService {
     private PetSalesmanRepository salesmanRepository;
 
     @Override
-    public KVResult addHospital(HospitalDTO hospitalDTO, Integer adminId) {
+    public KVResult addHospital(HospitalDTO hospitalDTO, Integer salesmanId) {
 
         PetHospital hospital;
         if (hospitalDTO.getHospitalId() != null && hospitalDTO.getHospitalId() != 0) {
@@ -80,6 +80,7 @@ public class HospitalServiceImpl implements HospitalService {
 
         BeanUtils.copyProperties(hospitalDTO, hospital);
         hospital.setUpdateDate(new Date());
+        hospital.setSalesmanId(salesmanId);
         hospital = hospitalRepository.save(hospital);
 
         //医院头像
@@ -87,7 +88,7 @@ public class HospitalServiceImpl implements HospitalService {
         if (headPortrait != null) {
             headPortrait.setHospitalId(hospital.getHospitalId());
             headPortrait.setFileType(FileType.HOSPITAL_HEAD_PORTRAIT);
-            PetFile upload = fileService.upload(headPortrait, adminId);
+            PetFile upload = fileService.upload(headPortrait, salesmanId);
             hospital.setHospitalHeadPortrait(upload.getFileUrl());
             hospital = hospitalRepository.save(hospital);
         }
@@ -100,7 +101,7 @@ public class HospitalServiceImpl implements HospitalService {
                 fileDTO.setHospitalId(hospital.getHospitalId());
                 fileDTO.setFileType(FileType.HOSPITAL_BUSINESS_LICENSE);
             }
-            fileService.upload(businessLicense, adminId);
+            fileService.upload(businessLicense, salesmanId);
         }
 
 
@@ -111,7 +112,7 @@ public class HospitalServiceImpl implements HospitalService {
                 fileDTO.setFileType(FileType.HOSPITAL_DETAILS_PIC);
             }
 
-            fileService.upload(hospitalDetailsPic, adminId);
+            fileService.upload(hospitalDetailsPic, salesmanId);
         }
 
 
@@ -129,7 +130,7 @@ public class HospitalServiceImpl implements HospitalService {
 
 
     @Override
-    public KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer v2) {
+    public KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer salesmanId) {
 
         Pageable pageable = PageRequest.of(page, 10, Sort.Direction.DESC, "hospitalId");
         Page<PetHospital> hospitalPage = hospitalRepository.findAll((root, query, criteriaBuilder) -> {
@@ -155,8 +156,10 @@ public class HospitalServiceImpl implements HospitalService {
             if (cooperationState != null && cooperationState != 0) {
                 list.add(criteriaBuilder.equal(root.get("cooperationState").as(Integer.class), cooperationState));
             }
+            if (salesmanId != null && salesmanId != 0) {
+                list.add(criteriaBuilder.equal(root.get("salesmanId").as(Integer.class), salesmanId));
 
-
+            }
             Predicate[] p = new Predicate[list.size()];
             return criteriaBuilder.and(list.toArray(p));
         }, pageable);
@@ -384,7 +387,7 @@ public class HospitalServiceImpl implements HospitalService {
     }
 
     @Override
-    public KVResult addPromoter(PromoterDTO promoterDTO, Integer adminId) {
+    public KVResult addPromoter(PromoterDTO promoterDTO, Integer salesmanId) {
 
         PetPromoter promoter;
         if (promoterDTO.getPromoterId() != null && promoterDTO.getPromoterId() != 0) {
@@ -412,7 +415,7 @@ public class HospitalServiceImpl implements HospitalService {
         }
 
         BeanUtils.copyProperties(promoterDTO, promoter);
-        promoter.setSalesmanId(adminId);
+        promoter.setSalesmanId(salesmanId);
         promoter = promoterRepository.save(promoter);
 
         FileUploadDTO fileUploadDTO = new FileUploadDTO();
@@ -439,14 +442,14 @@ public class HospitalServiceImpl implements HospitalService {
         fileUploadDTO.setFileDTOList(saveFileList);
 
 
-        fileService.upload(fileUploadDTO, adminId);
+        fileService.upload(fileUploadDTO, salesmanId);
 
 
         return KVResult.put(HttpStatus.OK);
     }
 
     @Override
-    public KVResult getPromoterPage(Integer page, Integer size, Integer state, Integer adminId) {
+    public KVResult getPromoterPage(Integer page, Integer size, Integer state, Integer salesmanId) {
 
         Pageable pageable = PageRequest.of(page, 10, Sort.Direction.DESC, "promoterId");
         Page<PetPromoter> promoterPage = promoterRepository.findAll((root, query, criteriaBuilder) -> {
@@ -457,6 +460,10 @@ public class HospitalServiceImpl implements HospitalService {
                 list.add(criteriaBuilder.equal(root.get("state").as(Integer.class), state));
             }
 
+            if (salesmanId != null && salesmanId != 0) {
+                list.add(criteriaBuilder.equal(root.get("salesmanId").as(Integer.class), salesmanId));
+
+            }
 
             Predicate[] p = new Predicate[list.size()];
             return criteriaBuilder.and(list.toArray(p));
@@ -590,7 +597,7 @@ public class HospitalServiceImpl implements HospitalService {
     }
 
     @Override
-    public KVResult addSalesman(Integer salesmanId, String name, String account, String password,String phone,String region, Integer state, Integer adminId) {
+    public KVResult addSalesman(Integer salesmanId, String name, String account, String password, String phone, String region, Integer state, Integer adminId) {
         PetSalesman petSalesman;
         if (salesmanId == null || salesmanId == 0) {
             if (StringUtils.isEmpty(name) || StringUtils.isEmpty(account) || StringUtils.isEmpty(password)) {
@@ -612,16 +619,16 @@ public class HospitalServiceImpl implements HospitalService {
         if (!StringUtils.isEmpty(password)) {
             petSalesman.setPassword(password);
         }
-        if(!StringUtils.isEmpty(phone)){
+        if (!StringUtils.isEmpty(phone)) {
             petSalesman.setPhone(phone);
         }
-        if(!StringUtils.isEmpty(region)){
+        if (!StringUtils.isEmpty(region)) {
             petSalesman.setRegion(region);
         }
         petSalesman.setToken("");
         petSalesman.setCreateDate(new Date());
         petSalesman.setAdminId(adminId);
-        if(state != null && state != 0){
+        if (state != null && state != 0) {
             petSalesman.setState(state);
         }
         salesmanRepository.save(petSalesman);

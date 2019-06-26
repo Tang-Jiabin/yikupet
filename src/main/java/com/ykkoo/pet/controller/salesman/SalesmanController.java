@@ -17,6 +17,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -71,7 +73,7 @@ public class SalesmanController {
     @ApiOperation("添加医院")
     @PostMapping({"/addHospital"})
 //    @RequestBody 添加这个能看到格式
-    public ServerResponse addHospital( HospitalDTO hospitalDTO, @ApiIgnore @RequestAttribute Integer salesmanId) {
+    public ServerResponse addHospital(HospitalDTO hospitalDTO, @ApiIgnore @RequestAttribute Integer salesmanId) {
         /* 38 */
         KVResult result = this.hospitalService.addHospital(hospitalDTO, salesmanId);
         /* 39 */
@@ -99,10 +101,23 @@ public class SalesmanController {
     @SalesmanAuthorization
     @ApiOperation("获取账户详情")
     @GetMapping({"/getAccountInfo"})
-    public ServerResponse getAccountInfo(@ApiParam("开始日期") @RequestParam Date startDate,
-                                         @ApiParam("结束日期") @RequestParam Date endDate,
+    public ServerResponse getAccountInfo(@ApiParam("开始日期 2019-01-01 00:00:00") @RequestParam String startDate,
+                                         @ApiParam("结束日期 2019-01-01 00:00:00") @RequestParam String endDate,
                                          @ApiIgnore @RequestAttribute Integer salesmanId) {
-        KVResult result = salesmanService.getAccountInfo(startDate,endDate,salesmanId);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date start = null;
+        Date end = null;
+        try {
+            start = sdf.parse(startDate);
+
+            end = sdf.parse(endDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return ServerResponse.createMessage(KVResult.put(433, "日期错误"));
+        }
+
+        KVResult result = salesmanService.getAccountInfo(start, end, salesmanId);
         return ServerResponse.createMessage(result);
     }
 }

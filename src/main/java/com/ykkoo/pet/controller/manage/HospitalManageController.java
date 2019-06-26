@@ -1,29 +1,36 @@
 package com.ykkoo.pet.controller.manage;
 
 import com.ykkoo.pet.common.annotation.AdminAuthorization;
+import com.ykkoo.pet.common.annotation.SalesmanAuthorization;
 import com.ykkoo.pet.common.http.KVResult;
 import com.ykkoo.pet.common.http.ServerResponse;
 import com.ykkoo.pet.dto.HospitalDTO;
 import com.ykkoo.pet.dto.PromoterDTO;
+import com.ykkoo.pet.repository.PetSalesmanRepository;
 import com.ykkoo.pet.service.HospitalService;
+import com.ykkoo.pet.service.SalesmanService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Api(value = "Z管理【医院】", description = "hospital")
 @RestController
 @org.springframework.web.bind.annotation.RequestMapping({"/manage/hospital"})
 @AdminAuthorization
+@AllArgsConstructor
 public class HospitalManageController {
     private HospitalService hospitalService;
 
-    public HospitalManageController(HospitalService hospitalService) {
-        /* 28 */
-        this.hospitalService = hospitalService;
-    }
 
+
+    private SalesmanService salesmanService;
 
     @AdminAuthorization
     @ApiOperation("添加医院")
@@ -101,6 +108,28 @@ public class HospitalManageController {
         return ServerResponse.createMessage(result.getKey().intValue(), result.getVal());
     }
 
+    @AdminAuthorization
+    @ApiOperation("获取销售员账户详情 推广数(基础版)、 推广数(尊享版)、返利比例、每个销售员下的推广员信息")
+    @GetMapping({"/getAccountInfo"})
+    public ServerResponse getAccountInfo(@ApiParam("开始日期 2019-01-01 00:00:00") @RequestParam String startDate,
+                                         @ApiParam("结束日期 2019-01-01 00:00:00") @RequestParam String endDate,
+                                         @ApiParam("销售员ID") @RequestParam Integer salesmanId) {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date start = null;
+        Date end = null;
+        try {
+            start = sdf.parse(startDate);
+
+            end = sdf.parse(endDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return ServerResponse.createMessage(KVResult.put(433, "日期错误"));
+        }
+
+        KVResult result = salesmanService.getAccountInfo(start, end, salesmanId);
+        return ServerResponse.createMessage(result);
+    }
 }
 
 

@@ -11,9 +11,9 @@ import java.util.List;
 
 public abstract interface HospitalService
 {
-  public abstract KVResult addHospital(HospitalDTO paramHospitalDTO, Integer paramInteger);
+  public abstract KVResult addHospital(HospitalDTO paramHospitalDTO, Integer salesmanId);
   
-  public abstract KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer v2);
+  public abstract KVResult getHospitalPage(Integer page, Integer size, Integer scope, Integer type, Integer cooperationState, String hospitalName, String contacts, Integer salesmanId);
   
   public abstract KVResult medicalAppointments(Integer paramInteger1, Integer paramInteger2);
   
@@ -28,9 +28,9 @@ public abstract interface HospitalService
 
   public abstract KVResult addDiagnosticInfo(DiagnosticDTO paramDiagnosticDTO, Integer paramInteger);
 
-  KVResult addPromoter(PromoterDTO promoterDTO, Integer adminId);
+  KVResult addPromoter(PromoterDTO promoterDTO, Integer salesmanId);
 
-  KVResult getPromoterPage(Integer page, Integer size, Integer state, Integer adminId);
+  KVResult getPromoterPage(Integer page, Integer size, Integer state, Integer salesmanId);
 
     KVResult getInsurancePolicyDetails(String phone,String cardNum, Integer hospitalInfoId);
 
